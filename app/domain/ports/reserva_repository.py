@@ -7,7 +7,7 @@ class ReservaRepository(ABC):
 
     @abstractmethod 
     def create(self, r: Reserva) -> Reserva: # Crear función en phtyon es def nombre_funcion(parametros) -> tipo_retorno
-        pass  # sin lógica, solo la firma
+        pass  # sin lógica, solo solo lo que va a hacer, pero no cómo
 
     @abstractmethod
     def get_all(self) -> List[Reserva]:
