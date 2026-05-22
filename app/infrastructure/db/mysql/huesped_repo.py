@@ -10,39 +10,57 @@ class PostgresHuespedRepository(HuespedRepository):
 
     def create(self, h: Huesped) -> Huesped:
         with engine.connect() as conn:
-            result = conn.execute(text("""
-                INSERT INTO "Huesped" ("Username", "Clave", "Miembro", "Economia", "Edad")
+            conn.execute(text("""
+                INSERT INTO `Huesped` (`Username`, `Clave`, `Miembro`, `Economia`, `Edad`)
                 VALUES (:username, :clave, :miembro, :economia, :edad)
-                RETURNING "ID_Huesped"
             """), {"username": h.username, "clave": h.clave, "miembro": h.miembro, "economia": h.economia, "edad": h.edad})
+            
+            result_id = conn.execute(text("SELECT LAST_INSERT_ID()"))
+            row_id = result_id.fetchone()
             conn.commit()
-            row = result.fetchone()
-            h.id = row[0]
+            
+            h.id = row_id[0]
             return h
 
     def get_all(self) -> List[Huesped]:
         with engine.connect() as conn:
-            result = conn.execute(text('SELECT * FROM "Huesped"'))
-            return [Huesped(id=r[0], username=r[1], clave=r[2], miembro=r[3], economia=r[4], edad=r[5]) for r in result]
+            result = conn.execute(text('SELECT * FROM `Huesped`'))
+            return [
+                Huesped(
+                    id=row._mapping["ID_Huesped"],
+                    username=row._mapping["Username"],
+                    clave=row._mapping["Clave"],
+                    miembro=row._mapping["Miembro"],
+                    economia=row._mapping["Economia"],
+                    edad=row._mapping["Edad"]
+                ) for row in result
+            ]
 
     def get_by_id(self, id: int) -> Optional[Huesped]:
         with engine.connect() as conn:
-            result = conn.execute(text('SELECT * FROM "Huesped" WHERE "ID_Huesped" = :id'), {"id": id})
+            result = conn.execute(text('SELECT * FROM `Huesped` WHERE `ID_Huesped` = :id'), {"id": id})
             r = result.fetchone()
             if r is None:
                 return None
-            return Huesped(id=r[0], username=r[1], clave=r[2], miembro=r[3], economia=r[4], edad=r[5])
+            return Huesped(
+                id=r._mapping["ID_Huesped"],
+                username=r._mapping["Username"],
+                clave=r._mapping["Clave"],
+                miembro=r._mapping["Miembro"],
+                economia=r._mapping["Economia"],
+                edad=r._mapping["Edad"]
+            )
 
     def update(self, id: int, h: Huesped) -> Huesped:
         with engine.connect() as conn:
             conn.execute(text("""
-                UPDATE "Huesped" SET "Username"=:username, "Clave"=:clave, "Miembro"=:miembro,
-                "Economia"=:economia, "Edad"=:edad WHERE "ID_Huesped"=:id
+                UPDATE `Huesped` SET `Username`=:username, `Clave`=:clave, `Miembro`=:miembro,
+                `Economia`=:economia, `Edad`=:edad WHERE `ID_Huesped`=:id
             """), {"username": h.username, "clave": h.clave, "miembro": h.miembro, "economia": h.economia, "edad": h.edad, "id": id})
             conn.commit()
             return h
 
     def delete(self, id: int) -> None:
         with engine.connect() as conn:
-            conn.execute(text('DELETE FROM "Huesped" WHERE "ID_Huesped" = :id'), {"id": id})
+            conn.execute(text('DELETE FROM `Huesped` WHERE `ID_Huesped` = :id'), {"id": id})
             conn.commit()

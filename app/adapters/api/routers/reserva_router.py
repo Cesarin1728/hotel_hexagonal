@@ -4,9 +4,11 @@ from fastapi import APIRouter, HTTPException # APIRouter es la clase que usamos 
 from app.adapters.api.schemas.reserva_schema import ReservaRequest, ReservaResponse
 from app.application.services.reserva_service import ReservaService
 from app.infrastructure.db.mysql.reserva_repo import PostgresReservaRepository # el repositorio concreto que implementa la interfaz ReservaRepository, en este caso para PostgreSQL (SupaBase)
+from app.infrastructure.db.mysql.cuarto_repo import PostgresCuartoRepository
+from app.infrastructure.db.mysql.huesped_repo import PostgresHuespedRepository
 
 router = APIRouter(prefix="/api/reservas", tags=["Reservas"]) # prefix es el prefijo común para todas las rutas de este router, tags es para agruparlas en la documentación automática de FastAPI
-service = ReservaService(PostgresReservaRepository()) # creamos una instancia del servicio, inyectándole el repositorio concreto que implementa la interfaz ReservaRepository. Esto es la inyección de dependencias manual
+service = ReservaService(PostgresReservaRepository(), PostgresCuartoRepository(), PostgresHuespedRepository()) # creamos una instancia del servicio, inyectándole el repositorio concreto que implementa la interfaz ReservaRepository. Esto es la inyección de dependencias manual
 
 # @router.get("/") registra este método como un endpoint GET en /api/reservas/
 @router.get("/", response_model=list[ReservaResponse])

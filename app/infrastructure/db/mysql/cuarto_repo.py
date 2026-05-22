@@ -10,39 +10,55 @@ class PostgresCuartoRepository(CuartoRepository):
 
     def create(self, c: Cuarto) -> Cuarto:
         with engine.connect() as conn:
-            result = conn.execute(text("""
-                INSERT INTO "Cuarto" ("Nombre", "Detalles", "Precio", "Espacio")
+            conn.execute(text("""
+                INSERT INTO `Cuarto` (`Nombre`, `Detalles`, `Precio`, `Espacio`)
                 VALUES (:nombre, :detalles, :precio, :espacio)
-                RETURNING "ID_Cuarto"
             """), {"nombre": c.nombre, "detalles": c.detalles, "precio": c.precio, "espacio": c.espacio})
+            
+            result_id = conn.execute(text("SELECT LAST_INSERT_ID()"))
+            row_id = result_id.fetchone()
             conn.commit()
-            row = result.fetchone()
-            c.id = row[0]
+            
+            c.id = row_id[0]
             return c
 
     def get_all(self) -> List[Cuarto]:
         with engine.connect() as conn:
-            result = conn.execute(text('SELECT * FROM "Cuarto"'))
-            return [Cuarto(id=r[0], nombre=r[1], detalles=r[2], precio=r[3], espacio=r[4]) for r in result]
+            result = conn.execute(text('SELECT * FROM `Cuarto`'))
+            return [
+                Cuarto(
+                    id=row._mapping["ID_Cuarto"],
+                    nombre=row._mapping["Nombre"],
+                    detalles=row._mapping["Detalles"],
+                    precio=row._mapping["Precio"],
+                    espacio=row._mapping["Espacio"]
+                ) for row in result
+            ]
 
     def get_by_id(self, id: int) -> Optional[Cuarto]:
         with engine.connect() as conn:
-            result = conn.execute(text('SELECT * FROM "Cuarto" WHERE "ID_Cuarto" = :id'), {"id": id})
+            result = conn.execute(text('SELECT * FROM `Cuarto` WHERE `ID_Cuarto` = :id'), {"id": id})
             r = result.fetchone()
             if r is None:
                 return None
-            return Cuarto(id=r[0], nombre=r[1], detalles=r[2], precio=r[3], espacio=r[4])
+            return Cuarto(
+                id=r._mapping["ID_Cuarto"],
+                nombre=r._mapping["Nombre"],
+                detalles=r._mapping["Detalles"],
+                precio=r._mapping["Precio"],
+                espacio=r._mapping["Espacio"]
+            )
 
     def update(self, id: int, c: Cuarto) -> Cuarto:
         with engine.connect() as conn:
             conn.execute(text("""
-                UPDATE "Cuarto" SET "Nombre"=:nombre, "Detalles"=:detalles,
-                "Precio"=:precio, "Espacio"=:espacio WHERE "ID_Cuarto"=:id
+                UPDATE `Cuarto` SET `Nombre`=:nombre, `Detalles`=:detalles,
+                `Precio`=:precio, `Espacio`=:espacio WHERE `ID_Cuarto`=:id
             """), {"nombre": c.nombre, "detalles": c.detalles, "precio": c.precio, "espacio": c.espacio, "id": id})
             conn.commit()
             return c
 
     def delete(self, id: int) -> None:
         with engine.connect() as conn:
-            conn.execute(text('DELETE FROM "Cuarto" WHERE "ID_Cuarto" = :id'), {"id": id})
+            conn.execute(text('DELETE FROM `Cuarto` WHERE `ID_Cuarto` = :id'), {"id": id})
             conn.commit()
