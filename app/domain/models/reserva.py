@@ -6,7 +6,7 @@ from datetime import datetime
 
 @dataclass  # esta clase es solo para guardar datos. Es el dominio, no sabe nada de BD ni FastAPI
 class Reserva:
-    id: Optional[int]        # None al crear, la BD asigna el ID después. Optional porque puede ser None, pero una vez creada la reserva ya tendrá un ID
+    id: Optional[int] # None al crear, la BD asigna el ID después. Optional porque puede ser None, pero una vez creada la reserva ya tendrá un ID
     espacio: str
     fecha: datetime
     servicio_cuarto: bool 
