@@ -24,7 +24,7 @@ class ReservaService:
 
         huesped = self.huesped_repository.get_by_id(id_huesped)
         if not huesped:
-            raise HTTPException(status_code=404, detail=f"El huésped {id_huesped} no existe")
+            raise HTTPException(status_code=404, detail=f"El huesped {id_huesped} no existe")
 
         cuarto = self.cuarto_repository.get_by_id(id_cuarto)
         if not cuarto:
@@ -63,10 +63,10 @@ class ReservaService:
             raise HTTPException(status_code=400, detail="La cantidad de noches debe ser mayor a cero.")
 
         if not self.huesped_repository.get_by_id(id_huesped):
-            raise HTTPException(status_code=404, detail=f"El huésped con ID {id_huesped} no existe.")
+            raise HTTPException(status_code=404, detail=f"El huesped {id_huesped} no existe.")
             
         if not self.cuarto_repository.get_by_id(id_cuarto):
-            raise HTTPException(status_code=404, detail=f"El cuarto con ID {id_cuarto} no existe.")
+            raise HTTPException(status_code=404, detail=f"El cuarto {id_cuarto} no existe.")
 
         nueva_fecha_inicio = fecha
         nueva_fecha_fin = fecha + timedelta(days=noches)
