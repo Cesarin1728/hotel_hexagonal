@@ -15,9 +15,16 @@ class ReservaService:
         self.cuarto_repository = cuarto_repository
         self.huesped_repository = huesped_repository
 
-        # crea la instancia con los datos recibidos. None en id porque la BD todavía no le asigna ID
+    def _validar_fecha(self, fecha: datetime) -> None:
+        ahora = datetime.now()
+        fecha_sin_tz = fecha.replace(tzinfo=None) if fecha.tzinfo else fecha
+        if fecha_sin_tz < ahora:
+            raise HTTPException(status_code=400, detail="La fecha de reserva no puede ser en el pasado.")
+
     def create_reserva(self, espacio: str, fecha: datetime, servicio_cuarto: bool, noches: int, id_cuarto: int, id_huesped: int) -> Reserva:
-        
+
+        self._validar_fecha(fecha)
+
         if noches <= 0:
             raise HTTPException(status_code=400, detail="No hay noches negativas we")
 
@@ -60,7 +67,9 @@ class ReservaService:
         return self.repository.get_by_huesped(id_huesped)
 
     def update_reserva(self, id: int, espacio: str, fecha: datetime, servicio_cuarto: bool, noches: int, id_cuarto: int, id_huesped: int) -> Reserva:
-        
+
+        self._validar_fecha(fecha)
+
         if noches <= 0:
             raise HTTPException(status_code=400, detail="La cantidad de noches debe ser mayor a cero.")
 
