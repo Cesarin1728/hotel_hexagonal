@@ -19,7 +19,7 @@ class ReservaService:
         ahora = datetime.now()
         fecha_sin_tz = fecha.replace(tzinfo=None) if fecha.tzinfo else fecha
         if fecha_sin_tz < ahora:
-            raise HTTPException(status_code=400, detail="La fecha de reserva no puede ser en el pasado.")
+            raise HTTPException(status_code=400, detail="La fecha no es valida")
 
     def create_reserva(self, espacio: str, fecha: datetime, servicio_cuarto: bool, noches: int, id_cuarto: int, id_huesped: int) -> Reserva:
 
@@ -71,7 +71,7 @@ class ReservaService:
         self._validar_fecha(fecha)
 
         if noches <= 0:
-            raise HTTPException(status_code=400, detail="La cantidad de noches debe ser mayor a cero.")
+            raise HTTPException(status_code=400, detail="La cantidad de noches debe ser mayor a cero")
 
         if not self.huesped_repository.get_by_id(id_huesped):
             raise HTTPException(status_code=404, detail=f"El huesped {id_huesped} no existe.")
