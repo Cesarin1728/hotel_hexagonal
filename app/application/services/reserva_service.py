@@ -3,15 +3,14 @@
 from typing import List, Optional   
 from datetime import datetime, timedelta    
 from app.domain.models.reserva import Reserva                    
-from app.domain.ports.reserva_repository import ReservaRepository  # el contrato que debe cumplir el repositorio
+from app.domain.ports.reserva_repository import ReservaRepository
 from app.domain.ports.cuarto_repository import CuartoRepository
 from app.domain.ports.huesped_repository import HuespedRepository
 from fastapi import HTTPException
 
 class ReservaService:
 
-    def __init__(self, repository: ReservaRepository, cuarto_repository: CuartoRepository, huesped_repository: HuespedRepository
-    ): # recibe una instancia del repositorio, en este caso para MySQL con ReservaRepository
+    def __init__(self, repository: ReservaRepository, cuarto_repository: CuartoRepository, huesped_repository: HuespedRepository):
         self.repository = repository
         self.cuarto_repository = cuarto_repository
         self.huesped_repository = huesped_repository
@@ -45,7 +44,10 @@ class ReservaService:
                         detail=f"El cuarto {id_cuarto} ya está ocupado desde el {existente_inicio.strftime('%Y-%m-%d %H:%M')} hasta el {existente_fin.strftime('%Y-%m-%d %H:%M')}."
                     )
 
-        reserva = Reserva(id=None, espacio=espacio, fecha=fecha, servicio_cuarto=servicio_cuarto, noches=noches, id_cuarto=id_cuarto, id_huesped=id_huesped)
+        costo = cuarto.precio * noches
+
+        reserva = Reserva(id=None, espacio=espacio, fecha=fecha, servicio_cuarto=servicio_cuarto,
+                          noches=noches, costo=costo, id_cuarto=id_cuarto, id_huesped=id_huesped)
         return self.repository.create(reserva)
 
     def list_reservas(self) -> List[Reserva]:
@@ -65,7 +67,8 @@ class ReservaService:
         if not self.huesped_repository.get_by_id(id_huesped):
             raise HTTPException(status_code=404, detail=f"El huesped {id_huesped} no existe.")
             
-        if not self.cuarto_repository.get_by_id(id_cuarto):
+        cuarto = self.cuarto_repository.get_by_id(id_cuarto)
+        if not cuarto:
             raise HTTPException(status_code=404, detail=f"El cuarto {id_cuarto} no existe.")
 
         nueva_fecha_inicio = fecha
@@ -83,7 +86,10 @@ class ReservaService:
                         detail=f"El cuarto {id_cuarto} ya está ocupado desde  {existente_inicio.strftime('%Y-%m-%d %H:%M')} al {existente_fin.strftime('%Y-%m-%d %H:%M')}."
                     )
 
-        reserva = Reserva(id=id, espacio=espacio, fecha=fecha, servicio_cuarto=servicio_cuarto, noches=noches, id_cuarto=id_cuarto, id_huesped=id_huesped)
+        costo = cuarto.precio * noches
+
+        reserva = Reserva(id=id, espacio=espacio, fecha=fecha, servicio_cuarto=servicio_cuarto,
+                          noches=noches, costo=costo, id_cuarto=id_cuarto, id_huesped=id_huesped)
         return self.repository.update(id, reserva)
 
     def delete_reserva(self, id: int) -> None:

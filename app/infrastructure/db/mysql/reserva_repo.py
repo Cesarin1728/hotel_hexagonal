@@ -13,10 +13,10 @@ class PostgresReservaRepository(ReservaRepository):
     def create(self, r: Reserva) -> Reserva:
         with engine.connect() as conn:
             conn.execute(text(""" 
-                INSERT INTO `Reserva` (`Espacio`, `Fecha`, `ServicioCuarto`, `Noches`, `ID_Cuarto`, `ID_Huesped`)
-                VALUES (:espacio, :fecha, :servicio_cuarto, :noches, :id_cuarto, :id_huesped)
-            """), {"espacio": r.espacio, "fecha": r.fecha, "servicio_cuarto": r.servicio_cuarto, 
-                  "noches": r.noches, "id_cuarto": r.id_cuarto, "id_huesped": r.id_huesped})
+                INSERT INTO `Reserva` (`Espacio`, `Fecha`, `ServicioCuarto`, `Noches`, `Costo`, `ID_Cuarto`, `ID_Huesped`)
+                VALUES (:espacio, :fecha, :servicio_cuarto, :noches, :costo, :id_cuarto, :id_huesped)
+            """), {"espacio": r.espacio, "fecha": r.fecha, "servicio_cuarto": r.servicio_cuarto,
+                  "noches": r.noches, "costo": r.costo, "id_cuarto": r.id_cuarto, "id_huesped": r.id_huesped})
             
             result_id = conn.execute(text("SELECT LAST_INSERT_ID()"))
             row_id = result_id.fetchone()
@@ -35,6 +35,7 @@ class PostgresReservaRepository(ReservaRepository):
                     fecha=row._mapping["Fecha"],
                     servicio_cuarto=row._mapping["ServicioCuarto"],
                     noches=row._mapping["Noches"],
+                    costo=row._mapping["Costo"],
                     id_cuarto=row._mapping["ID_Cuarto"],
                     id_huesped=row._mapping["ID_Huesped"]
                 ) for row in result
@@ -52,6 +53,7 @@ class PostgresReservaRepository(ReservaRepository):
                 fecha=r._mapping["Fecha"],
                 servicio_cuarto=r._mapping["ServicioCuarto"],
                 noches=r._mapping["Noches"],
+                costo=r._mapping["Costo"],
                 id_cuarto=r._mapping["ID_Cuarto"],
                 id_huesped=r._mapping["ID_Huesped"]
             )
@@ -66,6 +68,7 @@ class PostgresReservaRepository(ReservaRepository):
                     fecha=row._mapping["Fecha"],
                     servicio_cuarto=row._mapping["ServicioCuarto"],
                     noches=row._mapping["Noches"],
+                    costo=row._mapping["Costo"],
                     id_cuarto=row._mapping["ID_Cuarto"],
                     id_huesped=row._mapping["ID_Huesped"]
                 ) for row in result
@@ -75,10 +78,11 @@ class PostgresReservaRepository(ReservaRepository):
         with engine.connect() as conn:
             conn.execute(text("""
                 UPDATE `Reserva` SET `Espacio`=:espacio, `Fecha`=:fecha, `ServicioCuarto`=:servicio_cuarto,
-                `Noches`=:noches, `ID_Cuarto`=:id_cuarto, `ID_Huesped`=:id_huesped
+                `Noches`=:noches, `Costo`=:costo, `ID_Cuarto`=:id_cuarto, `ID_Huesped`=:id_huesped
                 WHERE `ID_Reserva`=:id
             """), {"espacio": r.espacio, "fecha": r.fecha, "servicio_cuarto": r.servicio_cuarto,
-                  "noches": r.noches, "id_cuarto": r.id_cuarto, "id_huesped": r.id_huesped, "id": id})
+                  "noches": r.noches, "costo": r.costo, "id_cuarto": r.id_cuarto,
+                  "id_huesped": r.id_huesped, "id": id})
             conn.commit()
             return r
 
