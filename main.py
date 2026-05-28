@@ -13,5 +13,8 @@ app.include_router(huesped_router)
 app.include_router(cuarto_router)
 app.include_router(reserva_router)
 
+# Poner en al terminal de la carpeta para ejecurar el proyecto al iniciar
 # venv\Scripts\activate     uvicorn main:app --reload
+
+# URL de FastAPI 
 # http://127.0.0.1:8000/docs
