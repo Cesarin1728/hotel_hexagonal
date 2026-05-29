@@ -9,7 +9,7 @@ Este proyecto está estructurado bajo los principios de la **Arquitectura Hexago
 
 ---
 
-## La organización final de para el patrón hexagonal:
+## Organización final de carpetas para el patrón hexagonal:
 
 app/
 ├── domain/
