@@ -1,8 +1,10 @@
-from sqlalchemy import text
+from sqlalchemy import create_engine, text
 from typing import Optional
 from app.domain.models.usuario import Usuario
 from app.domain.ports.usuario_repository import UsuarioRepository
-from app.infrastructure.config.settings import engine
+from app.infrastructure.config.settings import DB_URL
+
+engine = create_engine(DB_URL)
 
 class MySQLUsuarioRepository(UsuarioRepository):
     def create(self, u: Usuario) -> Usuario:

@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.adapters.api.schemas.cuarto_schema import CuartoRequest, CuartoResponse
 from app.application.services.cuarto_service import CuartoService
 from app.infrastructure.db.mysql.cuarto_repo import PostgresCuartoRepository
-from app.adapters.dependencies.auth_deps import requerir_admin
+from app.adapters.api.dependencies.auth_deps import requerir_admin
 
 router  = APIRouter(prefix="/api/cuartos", tags=["Cuartos"])
 service = CuartoService(PostgresCuartoRepository())

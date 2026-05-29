@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from app.adapters.api.schemas.huesped_schema import HuespedRequest, HuespedResponse
 from app.application.services.huesped_service import HuespedService
 from app.infrastructure.db.mysql.huesped_repo import PostgresHuespedRepository
-from app.adapters.dependencies.auth_deps import obtener_usuario_actual, requerir_admin
+from app.adapters.api.dependencies.auth_deps import obtener_usuario_actual, requerir_admin
 
 router  = APIRouter(prefix="/api/huespedes", tags=["Huéspedes"])
 service = HuespedService(PostgresHuespedRepository())
