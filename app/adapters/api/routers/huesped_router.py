@@ -18,20 +18,30 @@ def obtener(id: int, current_user: dict = Depends(obtener_usuario_actual)):
     h = service.get_huesped(id)
     if not h:
         raise HTTPException(status_code=404, detail="Huésped no encontrado")
-    if current_user.get("rol") != "Administrador" and current_user.get("id") != id:
+    
+    # Seguridad: Comparamos el ID del token con el id_usuario dueño del perfil
+    if current_user.get("rol") != "Administrador" and current_user.get("id") != h.id_usuario:
         raise HTTPException(status_code=403, detail="No puedes ver el perfil de otro huésped")
     return h
 
-# Público: cualquiera puede registrarse como huésped
+# Solo autenticados: el id_usuario se inyecta desde el token (Robo de identidad bloqueado)
 @router.post("/", response_model=HuespedResponse)
-def crear(data: HuespedRequest):
-    return service.create_huesped(data.username, data.clave, data.miembro, data.economia, data.edad)
+def crear(data: HuespedRequest, current_user: dict = Depends(obtener_usuario_actual)):
+    id_del_token = current_user.get("id")
+    return service.create_huesped(id_del_token, data.username, data.clave, data.miembro, data.economia, data.edad)
 
 # El propio huésped o Administrador
 @router.put("/{id}", response_model=HuespedResponse)
 def actualizar(id: int, data: HuespedRequest, current_user: dict = Depends(obtener_usuario_actual)):
-    if current_user.get("rol") != "Administrador" and current_user.get("id") != id:
+    # Primero buscamos al huésped para saber quién es el dueño
+    h = service.get_huesped(id)
+    if not h:
+        raise HTTPException(status_code=404, detail="Huésped no encontrado")
+        
+    # Seguridad: Comparamos el ID del token con el id_usuario dueño del perfil
+    if current_user.get("rol") != "Administrador" and current_user.get("id") != h.id_usuario:
         raise HTTPException(status_code=403, detail="No puedes modificar el perfil de otro huésped")
+        
     return service.update_huesped(id, data.username, data.clave, data.miembro, data.economia, data.edad)
 
 # Solo Administrador

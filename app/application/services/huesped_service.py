@@ -8,11 +8,11 @@ class HuespedService:
     def __init__(self, repository: HuespedRepository):
         self.repository = repository
 
-    def create_huesped(self, username: str, clave: str, miembro: bool, economia: str, edad: int) -> Huesped:
+    def create_huesped(self, id_usuario: int, username: str, clave: str, miembro: bool, economia: str, edad: int) -> Huesped:
         if edad <= 0:
             raise HTTPException(status_code=400, detail="La edad no puede ser negativa")
-
-        huesped = Huesped(id=None, username=username, clave=clave, miembro=miembro, economia=economia, edad=edad)
+        
+        huesped = Huesped(id=None, id_usuario=id_usuario, username=username, clave=clave, miembro=miembro, economia=economia, edad=edad)
         return self.repository.create(huesped)
 
     def list_huespedes(self) -> List[Huesped]:

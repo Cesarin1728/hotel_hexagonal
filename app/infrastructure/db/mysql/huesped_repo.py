@@ -11,15 +11,20 @@ class PostgresHuespedRepository(HuespedRepository):
     def create(self, h: Huesped) -> Huesped:
         with engine.connect() as conn:
             conn.execute(text("""
-                INSERT INTO `Huesped` (`Username`, `Clave`, `Miembro`, `Economia`, `Edad`)
-                VALUES (:username, :clave, :miembro, :economia, :edad)
-            """), {"username": h.username, "clave": h.clave, "miembro": h.miembro, "economia": h.economia, "edad": h.edad})
-            
-            result_id = conn.execute(text("SELECT LAST_INSERT_ID()"))
-            row_id = result_id.fetchone()
+                INSERT INTO `huesped` (`ID_Usuario`, `Username`, `Clave`, `Miembro`, `Economia`, `Edad`)
+                VALUES (:id_usuario, :username, :clave, :miembro, :economia, :edad)
+            """), {
+                "id_usuario": h.id_usuario, 
+                "username": h.username, 
+                "clave": h.clave, 
+                "miembro": h.miembro, 
+                "economia": h.economia, 
+                "edad": h.edad
+            })
             conn.commit()
             
-            h.id = row_id[0]
+            result = conn.execute(text("SELECT LAST_INSERT_ID()"))
+            h.id = result.scalar()
             return h
 
     def get_all(self) -> List[Huesped]:

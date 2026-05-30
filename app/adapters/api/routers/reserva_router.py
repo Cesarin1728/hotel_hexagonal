@@ -39,7 +39,11 @@ def por_huesped(id_huesped: int, current_user: dict = Depends(obtener_usuario_ac
 
 # Cualquier usuario autenticado
 @router.post("/", response_model=ReservaResponse)
-def crear(data: ReservaRequest, _=Depends(obtener_usuario_actual)):
+def crear(data: ReservaRequest, current_user: dict = Depends(obtener_usuario_actual)):
+    # Evita que un Cliente (Huésped) cree reservas usando el ID de alguien más
+    if current_user.get("rol") != "Administrador" and current_user.get("id") != data.id_huesped:
+        raise HTTPException(status_code=403, detail="No puedes crear reservas a nombre de otro huésped")
+        
     return service.create_reserva(data.espacio, data.fecha, data.servicio_cuarto, data.noches, data.id_cuarto, data.id_huesped)
 
 # El huésped dueño o Administrador

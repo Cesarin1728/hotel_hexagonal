@@ -3,6 +3,8 @@ from app.adapters.api.routers.auth_router    import router as auth_router
 from app.adapters.api.routers.cuarto_router  import router as cuarto_router
 from app.adapters.api.routers.huesped_router import router as huesped_router
 from app.adapters.api.routers.reserva_router import router as reserva_router
+# Importar el nuevo router de WebSockets
+from app.adapters.realtime.chat_router       import router as chat_router
 
 app = FastAPI(
     title="Hotel API - Arquitectura Hexagonal + Auth",
@@ -14,6 +16,8 @@ app.include_router(auth_router)
 app.include_router(cuarto_router)
 app.include_router(huesped_router)
 app.include_router(reserva_router)
+# Registrar el router del chat
+app.include_router(chat_router)
 
 # Poner en al terminal de la carpeta para ejecurar el proyecto al iniciar
 # venv\Scripts\activate     

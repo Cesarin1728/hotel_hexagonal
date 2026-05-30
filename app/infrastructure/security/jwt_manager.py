@@ -3,7 +3,7 @@ from jose import jwt, JWTError
 
 SECRET_KEY = "hotel_hexagonal_secret_2024"
 ALGORITHM  = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 20
 REFRESH_TOKEN_EXPIRE_DAYS   = 7
 
 class JWTManager:
