@@ -3,8 +3,9 @@ from typing import Optional
 from datetime import datetime
 
 @dataclass
-class Message:
+class MensajeChat:
     id: Optional[int]
-    user: str
-    content: str
-    created_at: datetime
+    id_cliente: int
+    emisor: str
+    contenido: str
+    fecha: datetime

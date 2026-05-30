@@ -18,4 +18,4 @@ class InMemoryFAQRepository(FAQPort):
         for keyword, answer in self.faqs.items():
             if keyword in question_lower:
                 return answer
-        return "No hay respuestas predeterminadas"
+        return "No tengo una respuesta automatizada para eso."
