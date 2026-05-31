@@ -3,7 +3,11 @@
 <head><meta charset="UTF-8"><title>Catálogo</title></head>
 <body>
     <h1>Catálogo de Habitaciones</h1>
-    <nav><a href="checkout.html">🛒 Checkout</a> | <a href="historial.html">Historial</a></nav>
+    <nav>
+        <a href="checkout.html" style="margin-right: 15px; text-decoration: none;">🛒 Mi Carrito</a>
+        <a href="historial.html" style="margin-right: 15px; text-decoration: none;">Mis Reservas</a>
+        <a href="login.html" style="text-decoration: none; color: #e74c3c; font-weight: bold;" onclick="localStorage.clear()">Entrar / Salir</a>
+    </nav>
     <div id="catalogo"></div>
     
     <div style="position:fixed; bottom:0; right:0; border:1px solid #000; padding:10px; background:#fff;">
@@ -12,10 +16,26 @@
         <input type="text" id="chat-input"><button id="chat-send">Enviar</button>
     </div>
 
-    <script type="module">
+   <script type="module">
         import { cuartoAdapter } from './src/presentation/app.js';
         import { ChatAdapter } from './src/infrastructure/websocket/ChatAdapter.js';
 
+        // 1. Lógica mejorada: Validamos la sesión
+        window.reservar = (id) => {
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                alert("Debes iniciar sesión primero para poder reservar.");
+                window.location.href = "login.html"; 
+                return;
+            }
+
+            localStorage.setItem('carrito', id);
+            alert("¡Cuarto pre-reservado! Te llevaremos al checkout para elegir las fechas.");
+            window.location.href = "checkout.html"; 
+        };
+
+        // 2. Carga del Catálogo
         document.addEventListener('DOMContentLoaded', async () => {
             const div = document.getElementById('catalogo');
             const cuartos = await cuartoAdapter.listarTodos();
@@ -24,16 +44,30 @@
                     <img src="${c.imagen_url}" width="200">
                     <h3>${c.nombre} - $${c.precio}</h3>
                     <p>${c.detalles} | Capacidad: ${c.espacio}</p>
-                    <button onclick="localStorage.setItem('carrito', ${c.id}); alert('Agregado');">Reservar</button>
+                    
+                    <button onclick="window.reservar(${c.id})" style="padding: 10px; background: #2980b9; color: white; border: none; cursor:pointer;">Reservar</button>
                 </div>
             `).join('');
         });
 
+        // 3. Lógica del Chat
+        // Lógica del Chat
         const chat = new ChatAdapter('ws://localhost:8000');
-        chat.conectar('huesped', msg => document.getElementById('chat-box').innerHTML += `<p>Recepción: ${msg}</p>`);
-        document.getElementById('chat-send').addEventListener('click', () => {
-            chat.enviarMensaje(document.getElementById('chat-input').value);
-        });
+        const tokenChat = localStorage.getItem('token');
+        
+        // Solo intentamos conectar el chat si el usuario ya inició sesión
+        if (tokenChat) {
+            chat.conectar(tokenChat, msg => {
+                document.getElementById('chat-box').innerHTML += `<p>${msg}</p>`;
+            });
+            
+            document.getElementById('chat-send').addEventListener('click', () => {
+                chat.enviarMensaje(document.getElementById('chat-input').value);
+                document.getElementById('chat-input').value = '';
+            });
+        } else {
+            document.getElementById('chat-box').innerHTML = "<p><i>Inicia sesión para usar el chat</i></p>";
+        }
     </script>
 </body>
 </html>

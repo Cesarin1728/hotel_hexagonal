@@ -34,10 +34,26 @@
             } catch(err) { alert(err.message); }
         });
 
+        // 3. Chat Soporte (Administrador)
         const chat = new ChatAdapter('ws://localhost:8000');
-        chat.conectar('admin', msg => document.getElementById('chat-box').innerHTML += `<p>Cliente: ${msg}</p>`);
+        const tokenAdmin = localStorage.getItem('token');
+        
+        chat.conectar(tokenAdmin, msg => {
+            document.getElementById('chat-box').innerHTML += `<p>${msg}</p>`;
+        });
+
         document.getElementById('chat-send').addEventListener('click', () => {
-            chat.enviarMensaje(document.getElementById('chat-input').value);
+            const inputMsg = document.getElementById('chat-input').value;
+            // Para el ejemplo, respondemos al cliente 1. 
+            // En un flujo final, sacarías el id_cliente del mensaje que te acaba de llegar.
+            const payload = JSON.stringify({
+                id_cliente: 1, 
+                msg: inputMsg
+            });
+            
+            chat.enviarMensaje(payload);
+            document.getElementById('chat-box').innerHTML += `<p style="color: blue;">Tú: ${inputMsg}</p>`;
+            document.getElementById('chat-input').value = '';
         });
     </script>
 </body>

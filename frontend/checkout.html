@@ -9,20 +9,41 @@
     </form>
     <script type="module">
         import { reservaAdapter } from './src/presentation/app.js';
+        
         document.getElementById('checkout-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = localStorage.getItem('carrito');
             const token = localStorage.getItem('token');
             if(!id || !token) return alert("Falta carrito o sesión");
             
+            // 1. Decodificar el token para obtener el ID real del usuario (Huésped)
+            const payloadBase64 = token.split('.')[1];
+            const userPayload = JSON.parse(atob(payloadBase64));
+
+            // 2. Calcular la cantidad de noches
+            const fInicio = new Date(document.getElementById('inicio').value);
+            const fFin = new Date(document.getElementById('fin').value);
+            const diffTime = Math.abs(fFin - fInicio);
+            const nochesCalculadas = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+            
+            // 3. Estructurar la petición EXACTAMENTE como lo pide ReservaRequest
+            const datosReserva = {
+                espacio: "Estándar", // Opcional: podrías guardarlo en localStorage al darle a reservar
+                fecha: fInicio.toISOString(),
+                servicio_cuarto: false,
+                noches: nochesCalculadas,
+                id_cuarto: parseInt(id),
+                id_huesped: userPayload.id // Evita el error 403 de validación de identidad
+            };
+
             try {
-                await reservaAdapter.crearReserva({
-                    cuarto_id: parseInt(id), huesped_id: 1, 
-                    fecha_inicio: document.getElementById('inicio').value,
-                    fecha_fin: document.getElementById('fin').value, estado: "Confirmada"
-                }, token);
-                alert("Éxito!"); localStorage.removeItem('carrito'); window.location.href='index.html';
-            } catch(err) { alert(err.message); }
+                await reservaAdapter.crearReserva(datosReserva, token);
+                alert("¡Compra Exitosa!"); 
+                localStorage.removeItem('carrito'); 
+                window.location.href = 'historial.html';
+            } catch(err) { 
+                alert(err.message); 
+            }
         });
     </script>
 </body>
