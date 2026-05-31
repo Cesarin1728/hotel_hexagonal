@@ -1,16 +1,73 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><title>Historial</title></head>
-<body>
-    <h2>Mis Reservas</h2>
-    <div id="lista"></div>
+<head>
+    <meta charset="UTF-8">
+    <title>Mis Reservas</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>Mi Historial de Compras</h2>
+    <a href="index.html">← Volver al Catálogo</a>
+    <hr>
+    
+    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;" border="1">
+        <thead>
+            <tr style="background: #f4f4f4;">
+                <th style="padding: 10px;">ID Reserva</th>
+                <th>Habitación</th>
+                <th>Fecha de Llegada</th>
+                <th>Noches</th>
+                <th>Costo Total</th>
+            </tr>
+        </thead>
+        <tbody id="tabla-reservas"></tbody>
+    </table>
+
     <script type="module">
         import { reservaAdapter } from './src/presentation/app.js';
+
         document.addEventListener('DOMContentLoaded', async () => {
+            const tbody = document.getElementById('tabla-reservas');
+            const token = localStorage.getItem('token');
+            
+            if (!token) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">Inicia sesión primero.</td></tr>`;
+                return;
+            }
+
             try {
-                const reservas = await reservaAdapter.listarTodas(localStorage.getItem('token'));
-                document.getElementById('lista').innerHTML = reservas.map(r => `<p>Reserva #${r.id} | Cuarto: ${r.cuartoId} | ${r.estado}</p>`).join('');
-            } catch(e) { document.getElementById('lista').innerHTML = "Inicia sesión primero."; }
+                // Decodificar el token para sacar el ID y Rol
+                const payloadBase64 = token.split('.')[1];
+                const userPayload = JSON.parse(atob(payloadBase64));
+
+                let reservas = [];
+                
+                // Si es cliente, pide solo las suyas. Si es admin, pide todas.
+                if (userPayload.rol !== 'Administrador') {
+                    reservas = await reservaAdapter.listarPorHuesped(userPayload.id, token);
+                } else {
+                    reservas = await reservaAdapter.listarTodas(token);
+                }
+
+                // Validar si el arreglo viene vacío
+                if (reservas.length === 0) {
+                     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">No tienes reservas aún.</td></tr>`;
+                     return;
+                }
+
+                // Dibujar las filas con los datos mapeados
+                tbody.innerHTML = reservas.map(r => `
+                    <tr style="border-bottom: 1px solid #ddd;">
+                        <td style="padding: 10px; text-align: center;">#${r.id}</td>
+                        <td style="text-align: center;">Cuarto ${r.cuartoId}</td>
+                        <td style="text-align: center;">${r.fecha ? r.fecha.split('T')[0] : 'N/A'}</td>
+                        <td style="text-align: center;">${r.noches} Noche(s)</td>
+                        <td style="text-align: center; color: green; font-weight: bold;">$${r.costo}</td>
+                    </tr>
+                `).join('');
+                
+            } catch (error) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: red;">Error: ${error.message}</td></tr>`;
+            }
         });
     </script>
 </body>

@@ -1,48 +1,116 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><title>Checkout</title></head>
-<body>
-    <h2>Checkout</h2>
-    <form id="checkout-form">
-        <input type="date" id="inicio" required> <input type="date" id="fin" required>
-        <button type="submit">Pagar</button>
-    </form>
+<head>
+    <meta charset="UTF-8">
+    <title>Checkout - Carrito</title>
+</head>
+<body style="font-family: Arial; padding: 20px;">
+    <h2>🛒 Confirmar Reservas (Checkout)</h2>
+    <a href="index.html">← Volver al Catálogo</a>
+    <hr>
+    
+    <div id="mensaje-vacio" style="margin: 20px 0;"></div>
+    
+    <div id="lista-carrito" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; max-width: 500px;"></div>
+
+    <button id="btn-pagar-todo" style="display: none; padding: 12px; background: #27ae60; color: white; border: none; cursor: pointer; font-size: 16px; font-weight: bold; width: 100%; max-width: 500px;">
+        Pagar Todo el Carrito
+    </button>
+
     <script type="module">
         import { reservaAdapter } from './src/presentation/app.js';
         
-        document.getElementById('checkout-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = localStorage.getItem('carrito');
+        const contenedorCarrito = document.getElementById('lista-carrito');
+        const btnPagar = document.getElementById('btn-pagar-todo');
+        const mensajeVacio = document.getElementById('mensaje-vacio');
+
+        // Leer el arreglo del carrito
+        let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
+
+        if (carrito.length === 0) {
+            mensajeVacio.innerHTML = "<h3>Tu carrito está vacío.</h3>";
+        } else {
+            btnPagar.style.display = 'block';
+            // Dibujar un bloque de fechas por cada Cuarto en el carrito
+            contenedorCarrito.innerHTML = carrito.map(id => `
+                <div class="item-reserva" data-id="${id}" style="background: #f4f6f7; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7;">
+                    <h3 style="margin-top:0; color:#2c3e50;">Habitación #${id}</h3>
+                    <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                        <div style="flex: 1;">
+                            <label>Llegada:</label><br>
+                            <input type="date" class="input-inicio" style="width: 100%; padding: 5px;" required>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Salida:</label><br>
+                            <input type="date" class="input-fin" style="width: 100%; padding: 5px;" required>
+                        </div>
+                    </div>
+                    <button type="button" onclick="window.eliminarItem(${id})" style="background: #e74c3c; color: white; border: none; padding: 5px 10px; cursor:pointer; font-size: 12px;">Eliminar del carrito</button>
+                </div>
+            `).join('');
+        }
+
+        // Función para eliminar un solo cuarto del carrito
+        window.eliminarItem = (id) => {
+            carrito = carrito.filter(itemId => itemId !== id);
+            localStorage.setItem('carrito', JSON.stringify(carrito));
+            location.reload(); // Recargar para actualizar la vista
+        };
+
+        // Procesar TODAS las reservas al mismo tiempo
+        btnPagar.addEventListener('click', async () => {
             const token = localStorage.getItem('token');
-            if(!id || !token) return alert("Falta carrito o sesión");
+            if (!token) return alert("No has iniciado sesión.");
             
-            // 1. Decodificar el token para obtener el ID real del usuario (Huésped)
             const payloadBase64 = token.split('.')[1];
             const userPayload = JSON.parse(atob(payloadBase64));
 
-            // 2. Calcular la cantidad de noches
-            const fInicio = new Date(document.getElementById('inicio').value);
-            const fFin = new Date(document.getElementById('fin').value);
-            const diffTime = Math.abs(fFin - fInicio);
-            const nochesCalculadas = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
-            
-            // 3. Estructurar la petición EXACTAMENTE como lo pide ReservaRequest
-            const datosReserva = {
-                espacio: "Estándar", // Opcional: podrías guardarlo en localStorage al darle a reservar
-                fecha: fInicio.toISOString(),
-                servicio_cuarto: false,
-                noches: nochesCalculadas,
-                id_cuarto: parseInt(id),
-                id_huesped: userPayload.id // Evita el error 403 de validación de identidad
-            };
+            // Recopilar los datos de todos los cuadros HTML
+            const bloques = document.querySelectorAll('.item-reserva');
+            const promesasDeReserva = [];
+
+            for (let bloque of bloques) {
+                const idCuarto = bloque.getAttribute('data-id');
+                const strInicio = bloque.querySelector('.input-inicio').value;
+                const strFin = bloque.querySelector('.input-fin').value;
+
+                if (!strInicio || !strFin) {
+                    alert(`Faltan fechas en la Habitación #${idCuarto}`);
+                    return; // Detenemos el proceso si falta info
+                }
+
+                const fInicio = new Date(strInicio);
+                const fFin = new Date(strFin);
+                const nochesCalculadas = Math.ceil(Math.abs(fFin - fInicio) / (1000 * 60 * 60 * 24)) || 1;
+
+                const datosReserva = {
+                    espacio: "Estándar",
+                    fecha: strInicio + "T00:00:00", 
+                    servicio_cuarto: false,
+                    noches: nochesCalculadas,
+                    id_cuarto: parseInt(idCuarto),
+                    id_huesped: userPayload.id 
+                };
+
+                // Añadimos la petición al arreglo de promesas (sin ejecutarla todavía)
+                promesasDeReserva.push(reservaAdapter.crearReserva(datosReserva, token));
+            }
 
             try {
-                await reservaAdapter.crearReserva(datosReserva, token);
-                alert("¡Compra Exitosa!"); 
-                localStorage.removeItem('carrito'); 
-                window.location.href = 'historial.html';
-            } catch(err) { 
-                alert(err.message); 
+                // Ejecutamos TODAS las peticiones al backend simultáneamente
+                btnPagar.textContent = "Procesando...";
+                btnPagar.disabled = true;
+
+                await Promise.all(promesasDeReserva);
+                
+                alert("¡Todas las reservas fueron procesadas con éxito!");
+                localStorage.removeItem('carrito'); // Vaciamos el carrito completo
+                window.location.href = 'historial.html'; // Vamos a ver las reservas
+
+            } catch (err) { 
+                alert("Error al procesar: " + err.message + "\n(Verifica que las fechas de alguna de las habitaciones no estén ya ocupadas)."); 
+                btnPagar.textContent = "Pagar Todo el Carrito";
+                btnPagar.disabled = false;
             }
         });
     </script>

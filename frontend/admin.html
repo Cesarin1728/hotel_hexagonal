@@ -1,60 +1,383 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><title>Admin</title></head>
-<body>
-    <h1>Panel Administrador</h1>
-    
-    <h3>Alta Cuartos</h3>
-    <form id="form-alta">
-        <input type="text" id="nombre" placeholder="Nombre" required>
-        <input type="text" id="detalles" placeholder="Detalles" required>
-        <input type="number" id="precio" placeholder="Precio" required>
-        <input type="text" id="espacio" placeholder="Capacidad" required>
-        <input type="file" id="imagen" required>
-        <button type="submit">Subir</button>
-    </form>
+<head>
+    <meta charset="UTF-8">
+    <title>Backoffice - Panel de Administrador</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; margin: 0; }
+        h2 { color: #2c3e50; }
+        .nav-header { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        
+        /* Sistema de Pestañas */
+        .tab-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .tab { display: none; }
+        .tab.active { display: block; }
+        
+        .nav-btn { padding: 12px 20px; cursor: pointer; background: #ecf0f1; border: none; border-radius: 5px; margin-right: 5px; font-weight: bold; color: #34495e; transition: 0.3s; }
+        .nav-btn:hover { background: #bdc3c7; }
+        .nav-btn.active { background: #2980b9; color: white; }
+        
+        /* Tablas */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+        th { background: #34495e; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        /* Formularios y Chat */
+        input, button { padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; }
+        button { cursor: pointer; background: #27ae60; color: white; border: none; font-weight: bold; transition: 0.2s; }
+        button:hover { filter: brightness(1.1); }
+        button.btn-danger { background: #e74c3c; }
+        button.btn-edit { background: #f39c12; }
+        
+        .chat-box { border: 1px solid #bdc3c7; background: #fafafa; height: 300px; overflow-y: auto; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
+        .msg-huesped { background: #e1f5fe; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: left; border-left: 4px solid #03a9f4; }
+        .msg-admin { background: #e8f5e9; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: right; border-right: 4px solid #4caf50; }
 
-    <h3>Chat Soporte</h3>
-    <div id="chat-box" style="height:100px; border:1px solid #000; overflow-y:scroll;"></div>
-    <input type="text" id="chat-input"><button id="chat-send">Responder</button>
+        /* Modal de Edición */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content label { font-weight: bold; color: #2c3e50; font-size: 14px; display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+
+    <div class="nav-header">
+        <h2>🛡️ Panel de Control - Administrador</h2>
+        <a href="index.html" style="text-decoration: none; color: #2980b9; font-weight: bold; margin-right: 15px;">← Ver Catálogo del Hotel</a>
+        <a href="login.html" style="text-decoration: none; color: #e74c3c; font-weight: bold;" onclick="localStorage.clear()">Cerrar Sesión</a>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <button class="nav-btn active" onclick="window.showTab('tab-cuartos')">🏨 Gestión de Cuartos</button>
+        <button class="nav-btn" onclick="window.showTab('tab-reservas')">📅 Todas las Reservas</button>
+        <button class="nav-btn" onclick="window.showTab('tab-huespedes')">👥 Gestión de Huéspedes</button>
+        <button class="nav-btn" onclick="window.showTab('tab-chat')">💬 Soporte en Vivo (Chat)</button>
+    </div>
+
+    <div class="tab-container">
+        
+        <div id="tab-cuartos" class="tab active">
+            <h3 style="margin-top:0;">Dar de Alta Nuevo Cuarto</h3>
+            <form id="form-cuarto" style="display: flex; gap: 10px; flex-wrap: wrap; background: #f4f6f7; padding: 15px; border-radius: 5px;">
+                <input type="text" id="c-nombre" placeholder="Nombre (Ej. Suite Presidencial)" required style="flex: 1; min-width: 200px;">
+                <input type="text" id="c-detalles" placeholder="Detalles o Descripción" required style="flex: 2; min-width: 250px;">
+                <input type="number" id="c-precio" placeholder="Precio $" required style="width: 100px;">
+                <input type="text" id="c-espacio" placeholder="Capacidad (Ej. 2 Personas)" required style="width: 150px;">
+                <input type="file" id="c-imagen" accept="image/*" required style="flex: 1;">
+                <button type="submit">Guardar y Subir Imagen</button>
+            </form>
+            
+            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
+            
+            <h3>Inventario de Cuartos</h3>
+            <table>
+                <thead><tr><th>ID</th><th>Fotografía</th><th>Nombre</th><th>Precio</th><th>Capacidad</th><th>Acciones</th></tr></thead>
+                <tbody id="lista-cuartos"></tbody>
+            </table>
+        </div>
+
+        <div id="tab-reservas" class="tab">
+            <h3 style="margin-top:0;">Historial General de Reservas</h3>
+            <table>
+                <thead><tr><th>Folio Reserva</th><th>ID del Huésped</th><th>Habitación Reservada</th><th>Fecha de Llegada</th><th>Noches</th><th>Ingreso ($)</th></tr></thead>
+                <tbody id="lista-reservas"></tbody>
+            </table>
+        </div>
+
+        <div id="tab-huespedes" class="tab">
+            <h3 style="margin-top:0;">Directorio de Huéspedes Registrados</h3>
+            <p style="color: #7f8c8d; font-size: 14px;"><i>Nota: Eliminar a un huésped destruirá también todas sus reservas e historial asociado.</i></p>
+            <table>
+                <thead><tr><th>ID Huésped</th><th>Nombre de Usuario</th><th>Membresía</th><th>Acciones Críticas</th></tr></thead>
+                <tbody id="lista-huespedes"></tbody>
+            </table>
+        </div>
+
+        <div id="tab-chat" class="tab">
+            <h3 style="margin-top:0;">Centro de Soporte (WebSockets)</h3>
+            <div class="chat-box" id="chat-box">
+                <div style="text-align: center; color: #95a5a6; margin-top: 100px;">Esperando mensajes de clientes...</div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="number" id="chat-id-cliente" placeholder="ID del Huésped a responder" required style="width: 250px;">
+                <input type="text" id="chat-input" placeholder="Escribe tu respuesta aquí..." required style="flex: 1;">
+                <button id="chat-send">Enviar Respuesta</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-editar" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#2980b9;">✏️ Editar Habitación</h3>
+            <form id="form-editar-cuarto">
+                <input type="hidden" id="e-id">
+                
+                <label>Nombre de la Habitación:</label>
+                <input type="text" id="e-nombre" style="width: 95%;" required>
+                
+                <label>Descripción / Detalles:</label>
+                <input type="text" id="e-detalles" style="width: 95%;" required>
+                
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>Precio por Noche ($):</label>
+                        <input type="number" id="e-precio" style="width: 90%;" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Capacidad:</label>
+                        <input type="text" id="e-espacio" style="width: 90%;" required>
+                    </div>
+                </div>
+
+                <label>Actualizar Imagen (Déjalo vacío para conservar la actual):</label>
+                <input type="file" id="e-imagen" accept="image/*" style="width: 95%; margin-bottom: 20px;">
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="document.getElementById('modal-editar').style.display='none'" style="background: #95a5a6;">Cancelar</button>
+                    <button type="submit" id="btn-guardar-edicion">Guardar Cambios</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <script type="module">
-        import { cuartoAdapter } from './src/presentation/app.js';
+        import { cuartoAdapter, reservaAdapter } from './src/presentation/app.js';
         import { ChatAdapter } from './src/infrastructure/websocket/ChatAdapter.js';
 
-        document.getElementById('form-alta').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const datos = {
-                nombre: document.getElementById('nombre').value, detalles: document.getElementById('detalles').value,
-                precio: document.getElementById('precio').value, espacio: document.getElementById('espacio').value
-            };
+        // 1. Verificación de Seguridad
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert("Acceso denegado. Serás redirigido al login.");
+            window.location.href = "login.html";
+        }
+
+        const payloadBase64 = token.split('.')[1];
+        const userPayload = JSON.parse(atob(payloadBase64));
+        if (userPayload.rol !== 'Administrador') {
+            alert("Tu cuenta no tiene privilegios de administrador.");
+            window.location.href = "index.html";
+        }
+
+        // 2. Control de Pestañas
+        window.showTab = (tabId) => {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.target.classList.add('active');
+        };
+
+        // ==========================================
+        // MÓDULO: CUARTOS (CREAR, LEER, EDITAR, BORRAR)
+        // ==========================================
+        let cuartosEnMemoria = []; // Guardamos los cuartos para no hacer doble consulta al editar
+
+        const cargarCuartos = async () => {
             try {
-                await cuartoAdapter.crear(datos, document.getElementById('imagen').files[0], localStorage.getItem('token'));
-                alert("Cuarto Creado"); e.target.reset();
-            } catch(err) { alert(err.message); }
+                cuartosEnMemoria = await cuartoAdapter.listarTodos();
+                document.getElementById('lista-cuartos').innerHTML = cuartosEnMemoria.map(c => `
+                    <tr>
+                        <td><b>#${c.id}</b></td>
+                        <td><img src="${c.imagen_url}" width="60" style="border-radius:5px;"></td>
+                        <td>${c.nombre}</td>
+                        <td style="color: green; font-weight: bold;">$${c.precio}</td>
+                        <td>${c.espacio}</td>
+                        <td>
+                            <button class="btn-edit" onclick="window.abrirModalEditar(${c.id})" style="margin-right: 5px;">✏️ Editar</button>
+                            <button class="btn-danger" onclick="window.eliminarCuarto(${c.id})">🗑️ Borrar</button>
+                        </td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error("Error cuartos:", e); }
+        };
+
+        // Lógica de Creación (POST)
+        document.getElementById('form-cuarto').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            btn.textContent = "Subiendo imagen..."; btn.disabled = true;
+
+            const formData = new FormData();
+            formData.append('nombre', document.getElementById('c-nombre').value);
+            formData.append('detalles', document.getElementById('c-detalles').value);
+            formData.append('precio', document.getElementById('c-precio').value);
+            formData.append('espacio', document.getElementById('c-espacio').value);
+            formData.append('imagen', document.getElementById('c-imagen').files[0]);
+
+            try {
+                const response = await fetch('http://localhost:8000/api/cuartos/', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                if (!response.ok) throw new Error("Error en servidor");
+                alert('¡Cuarto creado exitosamente!');
+                document.getElementById('form-cuarto').reset();
+                cargarCuartos();
+            } catch (error) { 
+                alert('Fallo al crear el cuarto.'); 
+            } finally {
+                btn.textContent = "Guardar y Subir Imagen"; btn.disabled = false;
+            }
         });
 
-        // 3. Chat Soporte (Administrador)
+        // Abrir Modal de Edición
+        window.abrirModalEditar = (id) => {
+            const cuarto = cuartosEnMemoria.find(c => c.id === id);
+            if(cuarto) {
+                document.getElementById('e-id').value = cuarto.id;
+                document.getElementById('e-nombre').value = cuarto.nombre;
+                document.getElementById('e-detalles').value = cuarto.detalles;
+                document.getElementById('e-precio').value = cuarto.precio;
+                document.getElementById('e-espacio').value = cuarto.espacio;
+                document.getElementById('e-imagen').value = ""; // Reseteamos el campo de archivo por seguridad
+                
+                document.getElementById('modal-editar').style.display = 'flex';
+            }
+        };
+
+        // Lógica de Edición (PUT)
+        document.getElementById('form-editar-cuarto').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-guardar-edicion');
+            btn.textContent = "Actualizando..."; btn.disabled = true;
+
+            const id = document.getElementById('e-id').value;
+            const formData = new FormData();
+            formData.append('nombre', document.getElementById('e-nombre').value);
+            formData.append('detalles', document.getElementById('e-detalles').value);
+            formData.append('precio', document.getElementById('e-precio').value);
+            formData.append('espacio', document.getElementById('e-espacio').value);
+
+            // Si el admin seleccionó una nueva foto, la agregamos
+            const nuevaImagen = document.getElementById('e-imagen').files[0];
+            if(nuevaImagen) {
+                formData.append('imagen', nuevaImagen);
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/api/cuartos/${id}`, {
+                    method: 'PUT', // Asegúrate de que tu backend use PUT o PATCH para actualizar
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    body: formData
+                });
+                
+                if (!response.ok) throw new Error("Asegúrate de que tu Backend tenga configurada la ruta PUT /api/cuartos/{id}");
+                alert('¡Habitación actualizada correctamente!');
+                document.getElementById('modal-editar').style.display = 'none';
+                cargarCuartos();
+            } catch (error) { 
+                alert(error.message); 
+            } finally {
+                btn.textContent = "Guardar Cambios"; btn.disabled = false;
+            }
+        });
+
+        // Lógica de Borrado (DELETE)
+        window.eliminarCuarto = async (id) => {
+            if(!confirm("¿Estás seguro de que deseas eliminar la Habitación #" + id + "?")) return;
+            try {
+                const response = await fetch(`http://localhost:8000/api/cuartos/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error("Posible conflicto con reservas existentes");
+                alert("Cuarto eliminado.");
+                cargarCuartos();
+            } catch(e) { alert("No se puede eliminar: " + e.message); }
+        };
+
+        // ==========================================
+        // MÓDULO: RESERVAS
+        // ==========================================
+        const cargarReservas = async () => {
+            try {
+                const reservas = await reservaAdapter.listarTodas(token);
+                document.getElementById('lista-reservas').innerHTML = reservas.map(r => `
+                    <tr>
+                        <td><b>#${r.id}</b></td>
+                        <td>Huésped ID: ${r.huespedId || r.id_huesped}</td>
+                        <td>Cuarto ${r.cuartoId}</td>
+                        <td>${r.fecha ? r.fecha.split('T')[0] : 'Sin Fecha'}</td>
+                        <td>${r.noches}</td>
+                        <td style="color: green; font-weight: bold;">$${r.costo}</td>
+                    </tr>
+                `).join('');
+            } catch (e) {
+                document.getElementById('lista-reservas').innerHTML = "<tr><td colspan='6'>Error de red al cargar reservas</td></tr>";
+            }
+        };
+
+        // ==========================================
+        // MÓDULO: HUÉSPEDES
+        // ==========================================
+        const cargarHuespedes = async () => {
+            try {
+                const res = await fetch('http://localhost:8000/api/huespedes/', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(!res.ok) throw new Error("Fallo de permisos");
+                const data = await res.json();
+                
+                document.getElementById('lista-huespedes').innerHTML = data.map(h => `
+                    <tr>
+                        <td><b>${h.id || h.ID_Huesped}</b></td>
+                        <td>${h.username || h.Username}</td>
+                        <td>${h.miembro ? '⭐ Premium' : 'Estándar'}</td>
+                        <td><button class="btn-danger" onclick="window.eliminarHuesped(${h.id || h.ID_Huesped})">Eliminar Permanente</button></td>
+                    </tr>
+                `).join('');
+            } catch(e) {
+                document.getElementById('lista-huespedes').innerHTML = "<tr><td colspan='4'>No se pudieron cargar los huéspedes</td></tr>";
+            }
+        };
+
+        window.eliminarHuesped = async (id) => {
+            if(!confirm("⚠️ ADVERTENCIA: Se aplicará Delete en Cascada. ¿Confirmar destrucción?")) return;
+            try {
+                const res = await fetch(`http://localhost:8000/api/huespedes/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if(!res.ok) throw new Error("Error en servidor.");
+                alert("Huésped purgado de la base de datos.");
+                cargarHuespedes();
+                cargarReservas();
+            } catch(e) { alert(e.message); }
+        };
+
+        // ==========================================
+        // MÓDULO: CHAT WEBSOCKETS
+        // ==========================================
+        const chatBox = document.getElementById('chat-box');
         const chat = new ChatAdapter('ws://localhost:8000');
-        const tokenAdmin = localStorage.getItem('token');
         
-        chat.conectar(tokenAdmin, msg => {
-            document.getElementById('chat-box').innerHTML += `<p>${msg}</p>`;
+        chat.conectar(token, msg => {
+            if(chatBox.innerHTML.includes("Esperando mensajes")) chatBox.innerHTML = '';
+            chatBox.innerHTML += `<div class="msg-huesped"><b>Mensaje Entrante:</b> ${msg}</div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
 
         document.getElementById('chat-send').addEventListener('click', () => {
+            const idCliente = document.getElementById('chat-id-cliente').value;
             const inputMsg = document.getElementById('chat-input').value;
-            // Para el ejemplo, respondemos al cliente 1. 
-            // En un flujo final, sacarías el id_cliente del mensaje que te acaba de llegar.
-            const payload = JSON.stringify({
-                id_cliente: 1, 
-                msg: inputMsg
-            });
             
+            if(!idCliente || !inputMsg) return alert("Ingresa el ID del huésped y el mensaje.");
+
+            const payload = JSON.stringify({ id_cliente: parseInt(idCliente), msg: inputMsg });
             chat.enviarMensaje(payload);
-            document.getElementById('chat-box').innerHTML += `<p style="color: blue;">Tú: ${inputMsg}</p>`;
+            
+            if(chatBox.innerHTML.includes("Esperando mensajes")) chatBox.innerHTML = '';
+            chatBox.innerHTML += `<div class="msg-admin"><b>Tú al Cliente #${idCliente}:</b> ${inputMsg}</div>`;
+            
             document.getElementById('chat-input').value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
         });
+
+        // 3. Inicializar Carga de Datos Inmediata
+        cargarCuartos();
+        cargarReservas();
+        cargarHuespedes();
     </script>
 </body>
 </html>

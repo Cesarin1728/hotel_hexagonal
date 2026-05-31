@@ -33,6 +33,7 @@ class PostgresHuespedRepository(HuespedRepository):
             return [
                 Huesped(
                     id=row._mapping["ID_Huesped"],
+                    id_usuario=row._mapping["ID_Usuario"], # <-- Corrección aquí
                     username=row._mapping["Username"],
                     clave=row._mapping["Clave"],
                     miembro=row._mapping["Miembro"],
@@ -49,6 +50,7 @@ class PostgresHuespedRepository(HuespedRepository):
                 return None
             return Huesped(
                 id=r._mapping["ID_Huesped"],
+                id_usuario=r._mapping["ID_Usuario"], # <-- Corrección aquí
                 username=r._mapping["Username"],
                 clave=r._mapping["Clave"],
                 miembro=r._mapping["Miembro"],
