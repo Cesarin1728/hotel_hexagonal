@@ -8,3 +8,4 @@ class Cuarto:
     detalles: str   
     precio: int 
     espacio: str
+    imagen_url: Optional[str] = None

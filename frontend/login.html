@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Login</title></head>
+<body>
+    <h2>Iniciar Sesión</h2>
+    <form id="login-form">
+        <input type="text" id="user" placeholder="Usuario" required>
+        <input type="password" id="pass" placeholder="Contraseña" required>
+        <button type="submit">Entrar</button>
+    </form>
+    <script type="module">
+        import { authAdapter } from './src/presentation/app.js';
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const u = document.getElementById('user').value;
+            const p = document.getElementById('pass').value;
+            try {
+                const data = await authAdapter.login(u, p);
+                localStorage.setItem('token', data.access_token);
+                window.location.href = (u === 'admin') ? 'admin.html' : 'index.html';
+            } catch (error) { alert(error.message); }
+        });
+    </script>
+</body>
+</html>

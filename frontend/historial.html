@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Historial</title></head>
+<body>
+    <h2>Mis Reservas</h2>
+    <div id="lista"></div>
+    <script type="module">
+        import { reservaAdapter } from './src/presentation/app.js';
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const reservas = await reservaAdapter.listarTodas(localStorage.getItem('token'));
+                document.getElementById('lista').innerHTML = reservas.map(r => `<p>Reserva #${r.id} | Cuarto: ${r.cuartoId} | ${r.estado}</p>`).join('');
+            } catch(e) { document.getElementById('lista').innerHTML = "Inicia sesión primero."; }
+        });
+    </script>
+</body>
+</html>

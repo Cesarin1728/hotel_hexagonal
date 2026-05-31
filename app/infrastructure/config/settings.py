@@ -1,10 +1,19 @@
-import os 
+import os
+from pydantic_settings import BaseSettings
 
-# Configuración por defecto para MySQL local en XAMPP
-DB_HOST     = os.getenv("DB_HOST", "localhost")
-DB_PORT     = os.getenv("DB_PORT", "3306")       # El puerto por defecto de MySQL es 3306
-DB_USER     = os.getenv("DB_USER", "root")        # Usuario administrador de XAMPP por defecto
-DB_PASSWORD = os.getenv("DB_PASSWORD", "")        # XAMPP viene sin contraseña por defecto
-DB_NAME     = os.getenv("DB_NAME", "hotel_local")
+class Settings(BaseSettings):
+    DB_HOST: str = os.getenv("DB_HOST", "localhost")
+    DB_PORT: str = os.getenv("DB_PORT", "3306")       
+    DB_USER: str = os.getenv("DB_USER", "root")       
+    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "")   
+    DB_NAME: str = os.getenv("DB_NAME", "hotel_local")
+    
+    AWS_ACCESS_KEY: str = os.getenv("AWS_ACCESS_KEY", "tu_access_key")
+    AWS_SECRET_KEY: str = os.getenv("AWS_SECRET_KEY", "tu_secret_key")
+    AWS_REGION: str = os.getenv("AWS_REGION", "us-east-1")
+    BUCKET_NAME: str = os.getenv("BUCKET_NAME", "hotel-imagenes")
+    AWS_ENDPOINT_URL: str | None = os.getenv("AWS_ENDPOINT_URL", None)
 
-DB_URL = f"mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+settings = Settings()
+
+DB_URL = f"mysql+pymysql://{settings.DB_USER}:{settings.DB_PASSWORD}@{settings.DB_HOST}:{settings.DB_PORT}/{settings.DB_NAME}"

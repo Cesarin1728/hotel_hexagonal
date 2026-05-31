@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><title>Checkout</title></head>
+<body>
+    <h2>Checkout</h2>
+    <form id="checkout-form">
+        <input type="date" id="inicio" required> <input type="date" id="fin" required>
+        <button type="submit">Pagar</button>
+    </form>
+    <script type="module">
+        import { reservaAdapter } from './src/presentation/app.js';
+        document.getElementById('checkout-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = localStorage.getItem('carrito');
+            const token = localStorage.getItem('token');
+            if(!id || !token) return alert("Falta carrito o sesión");
+            
+            try {
+                await reservaAdapter.crearReserva({
+                    cuarto_id: parseInt(id), huesped_id: 1, 
+                    fecha_inicio: document.getElementById('inicio').value,
+                    fecha_fin: document.getElementById('fin').value, estado: "Confirmada"
+                }, token);
+                alert("Éxito!"); localStorage.removeItem('carrito'); window.location.href='index.html';
+            } catch(err) { alert(err.message); }
+        });
+    </script>
+</body>
+</html>
