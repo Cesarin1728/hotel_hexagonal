@@ -8,13 +8,11 @@ from app.infrastructure.security.jwt_manager import JWTManager
 
 router = APIRouter(prefix="/ws", tags=["Chat Realtime"])
 
-# Instanciamos los repositorios, el servicio y el manejador de JWT
 faq_repo = InMemoryFAQRepository()
 msg_repo = PostgresMensajeRepository()
 chat_service = ChatService(faq_repo, msg_repo)
-jwt_manager = JWTManager() # 2. Creamos la instancia
+jwt_manager = JWTManager() 
 
-# Connection Manager: Maneja 1 Admin y multiples Clientes
 class ConnectionManager:
     def __init__(self):
         self.active_clients: dict[int, WebSocket] = {} 
@@ -47,7 +45,6 @@ manager = ConnectionManager()
 
 @router.websocket("/chat")
 async def websocket_endpoint(websocket: WebSocket, token: str):
-    # 3. Usamos el método correcto de tu clase
     payload = jwt_manager.decode_token(token)
     
     if not payload:

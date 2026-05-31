@@ -38,7 +38,6 @@
 </div>
 
 <script>
-    // 1. Pedimos el Token JWT del Admin (ID 1)
     const token = prompt("Pega el Token JWT del ADMINISTRADOR aquí:");
     
     const ws = new WebSocket("ws://127.0.0.1:8000/ws/chat?token=" + token);
@@ -51,17 +50,14 @@
 
     ws.onmessage = function(event) {
         try {
-            // El admin recibe todo en formato JSON
             const data = JSON.parse(event.data);
             
-            // Si el JSON trae un ID de cliente, auto-completamos el campo de destino por comodidad
             if (data.id_cliente) {
                 targetIdField.value = data.id_cliente;
             }
             
             addMessage(data.msg, "client-msg");
         } catch (e) {
-            // Mensajes genéricos de sistema (ej. "Conectado como Administrador")
             addMessage("Sistema: " + event.data, "client-msg");
         }
     };
@@ -71,7 +67,6 @@
         const targetId = targetIdField.value.trim();
         
         if (text && targetId) {
-            // El Admin DEBE enviar la estructura JSON requerida por nuestro adaptador backend
             const payload = JSON.stringify({
                 "id_cliente": parseInt(targetId),
                 "msg": text
@@ -95,3 +90,4 @@
 </script>
 </body>
 </html>
+//Generado por Gemini para poder comprobar la funcionalidad de los chats

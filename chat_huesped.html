@@ -28,7 +28,6 @@
 </div>
 
 <script>
-    // 1. Pedimos el Token JWT del Huésped
     const token = prompt("Pega el Token JWT de un HUÉSPED aquí:");
     
     const ws = new WebSocket("ws://127.0.0.1:8000/ws/chat?token=" + token);
@@ -46,7 +45,7 @@
         const text = inputField.value.trim();
         if (text) {
             addMessage("Tú: " + text, "user");
-            ws.send(text); // El huésped envía texto puro
+            ws.send(text); 
             inputField.value = "";
         }
     }
@@ -61,3 +60,4 @@
 </script>
 </body>
 </html>
+//Generado por Gemini para poder comprobar la funcionalidad de los chats
