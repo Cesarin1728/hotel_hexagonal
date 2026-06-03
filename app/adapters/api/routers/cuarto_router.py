@@ -1,4 +1,5 @@
 from fastapi import APIRouter, HTTPException, Depends, File, UploadFile, Form
+from typing import Optional
 from app.adapters.api.schemas.cuarto_schema import CuartoResponse
 from app.application.services.cuarto_service import CuartoService
 from app.infrastructure.db.mysql.cuarto_repo import PostgresCuartoRepository
@@ -14,15 +15,49 @@ def listar():
 
 @router.post("/", response_model=CuartoResponse)
 def crear(
-    nombre: str = Form(...), detalles: str = Form(...),
-    precio: int = Form(...), espacio: str = Form(...),
+    nombre: str = Form(...), 
+    detalles: str = Form(...),
+    precio: str = Form(...), # Recibimos como string del Form
+    espacio: str = Form(...),
     imagen: UploadFile = File(...),
     _=Depends(requerir_admin)
 ):
     try:
+        # Convertimos explícitamente a int
         return service.create_cuarto(
-            nombre=nombre, detalles=detalles, precio=precio, espacio=espacio,
+            nombre=nombre, detalles=detalles, precio=int(precio), espacio=espacio,
             file_stream=imagen.file, filename=imagen.filename, content_type=imagen.content_type
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al crear: {str(e)}")
+
+@router.put("/{id}", response_model=CuartoResponse)
+def actualizar(
+    id: int,
+    nombre: str = Form(...), 
+    detalles: str = Form(...),
+    precio: str = Form(...), 
+    espacio: str = Form(...),
+    imagen: Optional[UploadFile] = File(None),
+    _=Depends(requerir_admin)
+):
+    try:
+        # Si envían archivo, lo procesamos; si no, pasamos None
+        file_stream = imagen.file if imagen else None
+        filename = imagen.filename if imagen else None
+        content_type = imagen.content_type if imagen else None
+        
+        return service.update_cuarto(
+            id=id, nombre=nombre, detalles=detalles, precio=int(precio), espacio=espacio,
+            file_stream=file_stream, filename=filename, content_type=content_type
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al actualizar: {str(e)}")
+
+@router.delete("/{id}")
+def eliminar(id: int, _=Depends(requerir_admin)):
+    try:
+        service.repository.delete(id)
+        return {"message": "Cuarto eliminado"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
