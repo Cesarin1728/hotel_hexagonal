@@ -3,7 +3,6 @@ import json
 from app.application.services.chat_service import ChatService
 from app.infrastructure.faq.faq_memory_repository import InMemoryFAQRepository
 from app.infrastructure.db.mysql.mensaje_repo import PostgresMensajeRepository
-# 1. Importamos la clase correcta
 from app.infrastructure.security.jwt_manager import JWTManager 
 
 router = APIRouter(prefix="/ws", tags=["Chat Realtime"])
@@ -16,7 +15,8 @@ jwt_manager = JWTManager()
 class ConnectionManager:
     def __init__(self):
         self.active_clients: dict[int, WebSocket] = {} 
-        self.admin_ws: WebSocket = None 
+        # Mantenemos la lista para soportar múltiples administradores conectados
+        self.active_admins: list[WebSocket] = [] 
 
     async def connect_client(self, id_cliente: int, websocket: WebSocket):
         await websocket.accept()
@@ -24,22 +24,36 @@ class ConnectionManager:
 
     async def connect_admin(self, websocket: WebSocket):
         await websocket.accept()
-        self.admin_ws = websocket
+        self.active_admins.append(websocket)
 
     def disconnect_client(self, id_cliente: int):
         if id_cliente in self.active_clients:
             del self.active_clients[id_cliente]
 
-    def disconnect_admin(self):
-        self.admin_ws = None
+    def disconnect_admin(self, websocket: WebSocket):
+        if websocket in self.active_admins:
+            self.active_admins.remove(websocket)
 
     async def send_to_admin(self, id_cliente: int, mensaje: str):
-        if self.admin_ws:
-            await self.admin_ws.send_text(json.dumps({"id_cliente": id_cliente, "msg": f"Cliente {id_cliente}: {mensaje}"}))
+        # FIX 1: Enviamos el mensaje limpio, sin el prefijo duplicado
+        for admin_ws in self.active_admins:
+            try:
+                await admin_ws.send_text(json.dumps({
+                    "id_cliente": id_cliente,
+                    "msg": mensaje
+                }))
+            except Exception:
+                pass
 
-    async def send_to_client(self, id_cliente: int, mensaje: str):
+    async def send_to_client(self, id_cliente: int, mensaje: str) -> bool:
+        # FIX 2: Retornamos True si se entregó, False si el cliente no está
         if id_cliente in self.active_clients:
-            await self.active_clients[id_cliente].send_text(f"Admin: {mensaje}")
+            try:
+                await self.active_clients[id_cliente].send_text(f"Admin: {mensaje}")
+                return True
+            except Exception:
+                pass
+        return False
 
 manager = ConnectionManager()
 
@@ -66,9 +80,16 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 respuesta_admin = json_data["msg"]
 
                 chat_service.guardar_mensaje_admin(target_cliente, respuesta_admin)
-                await manager.send_to_client(target_cliente, respuesta_admin)
-        except WebSocketDisconnect:
-            manager.disconnect_admin()
+                
+                # FIX 2: Avisamos al admin si el huésped cerró el navegador o se desconectó
+                entregado = await manager.send_to_client(target_cliente, respuesta_admin)
+                if not entregado:
+                    await websocket.send_text(json.dumps({
+                        "msg": f"⚠️ El huésped #{target_cliente} ya no está conectado en este momento."
+                    }))
+                    
+        except Exception: # Protegemos contra cierres de ventana del admin
+            manager.disconnect_admin(websocket)
 
     elif rol == "Cliente":
         await manager.connect_client(usuario_id, websocket)
@@ -88,5 +109,5 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                     await websocket.send_text("Bot: Un administrador le contestará pronto")
                     await manager.send_to_admin(usuario_id, data)
                     
-        except WebSocketDisconnect:
+        except Exception:
             manager.disconnect_client(usuario_id)
