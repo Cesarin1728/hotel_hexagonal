@@ -85,7 +85,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 if bot_response:
                     await websocket.send_text(f"Bot: {bot_response}")
                 else:
-                    await websocket.send_text("Bot: Un administrador revisará tu consulta en breve...")
+                    await websocket.send_text("Bot: Un administrador le contestará pronto")
                     await manager.send_to_admin(usuario_id, data)
                     
         except WebSocketDisconnect:
