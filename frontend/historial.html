@@ -2,73 +2,84 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mis Reservas</title>
+    <title>Mis Reservas - Historial</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        h2 { color: #2c3e50; margin-top: 0; }
+        .btn-back { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #3498db; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
+        th { background: #34495e; color: white; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .status-badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; background: #2ecc71; color: white; }
+    </style>
 </head>
-<body style="font-family: Arial; padding: 20px;">
-    <h2>Mi Historial de Compras</h2>
-    <a href="index.html">← Volver al Catálogo</a>
-    <hr>
-    
-    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;" border="1">
-        <thead>
-            <tr style="background: #f4f4f4;">
-                <th style="padding: 10px;">ID Reserva</th>
-                <th>Habitación</th>
-                <th>Fecha de Llegada</th>
-                <th>Noches</th>
-                <th>Costo Total</th>
-            </tr>
-        </thead>
-        <tbody id="tabla-reservas"></tbody>
-    </table>
+<body>
+
+    <div class="container">
+        <a href="index.html" class="btn-back">← Volver al Catálogo</a>
+        <h2>📅 Mi Historial de Reservas</h2>
+        <p style="color: #7f8c8d;">Aquí puedes consultar los cuartos que has adquirido y las fechas programadas.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Folio</th>
+                    <th>Habitación</th>
+                    <th>Fecha de Entrada</th>
+                    <th>Noches</th>
+                    <th>Total Pagado</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+            <tbody id="lista-historial">
+                <tr>
+                    <td colspan="6" style="color: #95a5a6;">Cargando tus reservas...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 
     <script type="module">
         import { reservaAdapter } from './src/presentation/app.js';
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const tbody = document.getElementById('tabla-reservas');
-            const token = localStorage.getItem('token');
-            
-            if (!token) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">Inicia sesión primero.</td></tr>`;
-                return;
-            }
+        const token = localStorage.getItem('token');
+        const tabla = document.getElementById('lista-historial');
 
+        if (!token) {
+            window.location.href = "login.html";
+        }
+
+        const cargarHistorial = async () => {
             try {
-                // Decodificar el token para sacar el ID y Rol
                 const payloadBase64 = token.split('.')[1];
                 const userPayload = JSON.parse(atob(payloadBase64));
-
-                let reservas = [];
                 
-                // Si es cliente, pide solo las suyas. Si es admin, pide todas.
-                if (userPayload.rol !== 'Administrador') {
-                    reservas = await reservaAdapter.listarPorHuesped(userPayload.id, token);
-                } else {
-                    reservas = await reservaAdapter.listarTodas(token);
+                const misReservas = await reservaAdapter.listarPorHuesped(userPayload.id, token);
+
+                if (misReservas.length === 0) {
+                    tabla.innerHTML = `<tr><td colspan="6" style="color: #95a5a6;">Aún no has realizado ninguna reserva en el hotel.</td></tr>`;
+                    return;
                 }
 
-                // Validar si el arreglo viene vacío
-                if (reservas.length === 0) {
-                     tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">No tienes reservas aún.</td></tr>`;
-                     return;
-                }
-
-                // Dibujar las filas con los datos mapeados
-                tbody.innerHTML = reservas.map(r => `
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <td style="padding: 10px; text-align: center;">#${r.id}</td>
-                        <td style="text-align: center;">Cuarto ${r.cuartoId}</td>
-                        <td style="text-align: center;">${r.fecha ? r.fecha.split('T')[0] : 'N/A'}</td>
-                        <td style="text-align: center;">${r.noches} Noche(s)</td>
-                        <td style="text-align: center; color: green; font-weight: bold;">$${r.costo}</td>
+                tabla.innerHTML = misReservas.map(r => `
+                    <tr>
+                        <td><b>#${r.id}</b></td>
+                        <td>Habitación #${r.cuartoId}</td>
+                        <td>${r.fecha ? r.fecha.split('T')[0] : 'Sin fecha'}</td>
+                        <td>${r.noches} noches</td>
+                        <td style="color: #27ae60; font-weight: bold;">$${r.costo}</td>
+                        <td><span class="status-badge">Confirmada</span></td>
                     </tr>
                 `).join('');
-                
+
             } catch (error) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px; color: red;">Error: ${error.message}</td></tr>`;
+                tabla.innerHTML = `<tr><td colspan="6" style="color: #e74c3c;">Error al conectar con el servidor de reservas o token expirado.</td></tr>`;
             }
-        });
+        };
+
+        cargarHistorial();
     </script>
 </body>
 </html>

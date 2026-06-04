@@ -31,7 +31,8 @@
         button.btn-edit { background: #f39c12; }
         
         .chat-box { border: 1px solid #bdc3c7; background: #fafafa; height: 300px; overflow-y: auto; padding: 15px; margin-bottom: 15px; border-radius: 5px; }
-        .msg-huesped { background: #e1f5fe; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: left; border-left: 4px solid #03a9f4; }
+        .msg-huesped { background: #e1f5fe; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: left; border-left: 4px solid #03a9f4; transition: background 0.2s; }
+        .msg-huesped:hover { background: #b3e5fc; }
         .msg-admin { background: #e8f5e9; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: right; border-right: 4px solid #4caf50; }
 
         /* Modal de Edición */
@@ -60,10 +61,10 @@
         <div id="tab-cuartos" class="tab active">
             <h3 style="margin-top:0;">Dar de Alta Nuevo Cuarto</h3>
             <form id="form-cuarto" style="display: flex; gap: 10px; flex-wrap: wrap; background: #f4f6f7; padding: 15px; border-radius: 5px;">
-                <input type="text" id="c-nombre" placeholder="Nombre (Ej. Suite Presidencial)" required style="flex: 1; min-width: 200px;">
+                <input type="text" id="c-nombre" placeholder="Nombre" required style="flex: 1; min-width: 200px;">
                 <input type="text" id="c-detalles" placeholder="Detalles o Descripción" required style="flex: 2; min-width: 250px;">
                 <input type="number" id="c-precio" placeholder="Precio $" required style="width: 100px;">
-                <input type="text" id="c-espacio" placeholder="Capacidad (Ej. 2 Personas)" required style="width: 150px;">
+                <input type="text" id="c-espacio" placeholder="Capacidad" required style="width: 150px;">
                 <input type="file" id="c-imagen" accept="image/*" required style="flex: 1;">
                 <button type="submit">Guardar y Subir Imagen</button>
             </form>
@@ -80,14 +81,13 @@
         <div id="tab-reservas" class="tab">
             <h3 style="margin-top:0;">Historial General de Reservas</h3>
             <table>
-                <thead><tr><th>Folio Reserva</th><th>ID del Huésped</th><th>Habitación Reservada</th><th>Fecha de Llegada</th><th>Noches</th><th>Ingreso ($)</th></tr></thead>
+                <thead><tr><th>Folio Reserva</th><th>ID del Huésped</th><th>Habitación</th><th>Fecha de Llegada</th><th>Noches</th><th>Ingreso ($)</th></tr></thead>
                 <tbody id="lista-reservas"></tbody>
             </table>
         </div>
 
         <div id="tab-huespedes" class="tab">
             <h3 style="margin-top:0;">Directorio de Huéspedes Registrados</h3>
-            <p style="color: #7f8c8d; font-size: 14px;"><i>Nota: Eliminar a un huésped destruirá también todas sus reservas e historial asociado.</i></p>
             <table>
                 <thead><tr><th>ID Huésped</th><th>Nombre de Usuario</th><th>Membresía</th><th>Acciones Críticas</th></tr></thead>
                 <tbody id="lista-huespedes"></tbody>
@@ -96,6 +96,7 @@
 
         <div id="tab-chat" class="tab">
             <h3 style="margin-top:0;">Centro de Soporte (WebSockets)</h3>
+            <p style="color: #7f8c8d; font-size: 13px; margin-bottom: 10px;"><i>💡 Consejo: Haz un clic sobre cualquier mensaje recibido para autocompletar el ID y responderle a ese huésped al instante.</i></p>
             <div class="chat-box" id="chat-box">
                 <div style="text-align: center; color: #95a5a6; margin-top: 100px;">Esperando mensajes de clientes...</div>
             </div>
@@ -112,16 +113,13 @@
             <h3 style="margin-top:0; color:#2980b9;">✏️ Editar Habitación</h3>
             <form id="form-editar-cuarto">
                 <input type="hidden" id="e-id">
-                
                 <label>Nombre de la Habitación:</label>
                 <input type="text" id="e-nombre" style="width: 95%;" required>
-                
                 <label>Descripción / Detalles:</label>
                 <input type="text" id="e-detalles" style="width: 95%;" required>
-                
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
-                        <label>Precio por Noche ($):</label>
+                        <label>Precio ($):</label>
                         <input type="number" id="e-precio" style="width: 90%;" required>
                     </div>
                     <div style="flex: 1;">
@@ -129,10 +127,8 @@
                         <input type="text" id="e-espacio" style="width: 90%;" required>
                     </div>
                 </div>
-
-                <label>Actualizar Imagen (Déjalo vacío para conservar la actual):</label>
+                <label>Actualizar Imagen (Opcional):</label>
                 <input type="file" id="e-imagen" accept="image/*" style="width: 95%; margin-bottom: 20px;">
-                
                 <div style="display: flex; justify-content: flex-end; gap: 10px;">
                     <button type="button" onclick="document.getElementById('modal-editar').style.display='none'" style="background: #95a5a6;">Cancelar</button>
                     <button type="submit" id="btn-guardar-edicion">Guardar Cambios</button>
@@ -145,21 +141,13 @@
         import { cuartoAdapter, reservaAdapter } from './src/presentation/app.js';
         import { ChatAdapter } from './src/infrastructure/websocket/ChatAdapter.js';
 
-        // 1. Verificación de Seguridad
         const token = localStorage.getItem('token');
-        if (!token) {
-            alert("Acceso denegado. Serás redirigido al login.");
-            window.location.href = "login.html";
-        }
+        if (!token) window.location.href = "login.html";
 
         const payloadBase64 = token.split('.')[1];
         const userPayload = JSON.parse(atob(payloadBase64));
-        if (userPayload.rol !== 'Administrador') {
-            alert("Tu cuenta no tiene privilegios de administrador.");
-            window.location.href = "index.html";
-        }
+        if (userPayload.rol !== 'Administrador') window.location.href = "index.html";
 
-        // 2. Control de Pestañas
         window.showTab = (tabId) => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -167,11 +155,7 @@
             event.target.classList.add('active');
         };
 
-        // ==========================================
-        // MÓDULO: CUARTOS (CREAR, LEER, EDITAR, BORRAR)
-        // ==========================================
-        let cuartosEnMemoria = []; // Guardamos los cuartos para no hacer doble consulta al editar
-
+        let cuartosEnMemoria = [];
         const cargarCuartos = async () => {
             try {
                 cuartosEnMemoria = await cuartoAdapter.listarTodos();
@@ -183,19 +167,18 @@
                         <td style="color: green; font-weight: bold;">$${c.precio}</td>
                         <td>${c.espacio}</td>
                         <td>
-                            <button class="btn-edit" onclick="window.abrirModalEditar(${c.id})" style="margin-right: 5px;">✏️ Editar</button>
+                            <button class="btn-edit" onclick="window.abrirModalEditar(${c.id})">✏️ Editar</button>
                             <button class="btn-danger" onclick="window.eliminarCuarto(${c.id})">🗑️ Borrar</button>
                         </td>
                     </tr>
                 `).join('');
-            } catch (e) { console.error("Error cuartos:", e); }
+            } catch (e) { console.error(e); }
         };
 
-        // Lógica de Creación (POST)
         document.getElementById('form-cuarto').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
-            btn.textContent = "Subiendo imagen..."; btn.disabled = true;
+            btn.textContent = "Subiendo..."; btn.disabled = true;
 
             const formData = new FormData();
             formData.append('nombre', document.getElementById('c-nombre').value);
@@ -210,18 +193,14 @@
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
-                if (!response.ok) throw new Error("Error en servidor");
+                if (!response.ok) throw new Error();
                 alert('¡Cuarto creado exitosamente!');
                 document.getElementById('form-cuarto').reset();
                 cargarCuartos();
-            } catch (error) { 
-                alert('Fallo al crear el cuarto.'); 
-            } finally {
-                btn.textContent = "Guardar y Subir Imagen"; btn.disabled = false;
-            }
+            } catch { alert('Fallo al crear el cuarto.'); }
+            finally { btn.textContent = "Guardar y Subir Imagen"; btn.disabled = false; }
         });
 
-        // Abrir Modal de Edición
         window.abrirModalEditar = (id) => {
             const cuarto = cuartosEnMemoria.find(c => c.id === id);
             if(cuarto) {
@@ -230,13 +209,10 @@
                 document.getElementById('e-detalles').value = cuarto.detalles;
                 document.getElementById('e-precio').value = cuarto.precio;
                 document.getElementById('e-espacio').value = cuarto.espacio;
-                document.getElementById('e-imagen').value = ""; // Reseteamos el campo de archivo por seguridad
-                
                 document.getElementById('modal-editar').style.display = 'flex';
             }
         };
 
-        // Lógica de Edición (PUT)
         document.getElementById('form-editar-cuarto').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-guardar-edicion');
@@ -249,47 +225,34 @@
             formData.append('precio', document.getElementById('e-precio').value);
             formData.append('espacio', document.getElementById('e-espacio').value);
 
-            // Si el admin seleccionó una nueva foto, la agregamos
             const nuevaImagen = document.getElementById('e-imagen').files[0];
-            if(nuevaImagen) {
-                formData.append('imagen', nuevaImagen);
-            }
+            if(nuevaImagen) formData.append('imagen', nuevaImagen);
 
             try {
                 const response = await fetch(`http://localhost:8000/api/cuartos/${id}`, {
-                    method: 'PUT', // Asegúrate de que tu backend use PUT o PATCH para actualizar
+                    method: 'PUT',
                     headers: { 'Authorization': `Bearer ${token}` },
                     body: formData
                 });
-                
-                if (!response.ok) throw new Error("Asegúrate de que tu Backend tenga configurada la ruta PUT /api/cuartos/{id}");
+                if (!response.ok) throw new Error();
                 alert('¡Habitación actualizada correctamente!');
                 document.getElementById('modal-editar').style.display = 'none';
                 cargarCuartos();
-            } catch (error) { 
-                alert(error.message); 
-            } finally {
-                btn.textContent = "Guardar Cambios"; btn.disabled = false;
-            }
+            } catch { alert('Error al actualizar.'); }
+            finally { btn.textContent = "Guardar Cambios"; btn.disabled = false; }
         });
 
-        // Lógica de Borrado (DELETE)
         window.eliminarCuarto = async (id) => {
-            if(!confirm("¿Estás seguro de que deseas eliminar la Habitación #" + id + "?")) return;
+            if(!confirm("¿Deseas eliminar la Habitación #" + id + "?")) return;
             try {
-                const response = await fetch(`http://localhost:8000/api/cuartos/${id}`, {
+                await fetch(`http://localhost:8000/api/cuartos/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
-                if (!response.ok) throw new Error("Posible conflicto con reservas existentes");
-                alert("Cuarto eliminado.");
                 cargarCuartos();
-            } catch(e) { alert("No se puede eliminar: " + e.message); }
+            } catch(e) { alert("Error al borrar."); }
         };
 
-        // ==========================================
-        // MÓDULO: RESERVAS
-        // ==========================================
         const cargarReservas = async () => {
             try {
                 const reservas = await reservaAdapter.listarTodas(token);
@@ -303,22 +266,13 @@
                         <td style="color: green; font-weight: bold;">$${r.costo}</td>
                     </tr>
                 `).join('');
-            } catch (e) {
-                document.getElementById('lista-reservas').innerHTML = "<tr><td colspan='6'>Error de red al cargar reservas</td></tr>";
-            }
+            } catch { }
         };
 
-        // ==========================================
-        // MÓDULO: HUÉSPEDES
-        // ==========================================
         const cargarHuespedes = async () => {
             try {
-                const res = await fetch('http://localhost:8000/api/huespedes/', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(!res.ok) throw new Error("Fallo de permisos");
+                const res = await fetch('http://localhost:8000/api/huespedes/', { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await res.json();
-                
                 document.getElementById('lista-huespedes').innerHTML = data.map(h => `
                     <tr>
                         <td><b>${h.id || h.ID_Huesped}</b></td>
@@ -327,34 +281,39 @@
                         <td><button class="btn-danger" onclick="window.eliminarHuesped(${h.id || h.ID_Huesped})">Eliminar Permanente</button></td>
                     </tr>
                 `).join('');
-            } catch(e) {
-                document.getElementById('lista-huespedes').innerHTML = "<tr><td colspan='4'>No se pudieron cargar los huéspedes</td></tr>";
-            }
+            } catch { }
         };
 
         window.eliminarHuesped = async (id) => {
-            if(!confirm("⚠️ ADVERTENCIA: Se aplicará Delete en Cascada. ¿Confirmar destrucción?")) return;
+            if(!confirm("⚠️ ¿Confirmar eliminación del huésped?")) return;
             try {
-                const res = await fetch(`http://localhost:8000/api/huespedes/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if(!res.ok) throw new Error("Error en servidor.");
-                alert("Huésped purgado de la base de datos.");
+                await fetch(`http://localhost:8000/api/huespedes/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
                 cargarHuespedes();
                 cargarReservas();
-            } catch(e) { alert(e.message); }
+            } catch { }
         };
 
-        // ==========================================
-        // MÓDULO: CHAT WEBSOCKETS
-        // ==========================================
+        // ====================================================
+        // GESTIÓN CHAT REALTIME (RESPUESTA RÁPIDA CON CLIC)
+        // ====================================================
         const chatBox = document.getElementById('chat-box');
         const chat = new ChatAdapter('ws://localhost:8000');
         
-        chat.conectar(token, msg => {
+        chat.conectar(token, msgRaw => {
             if(chatBox.innerHTML.includes("Esperando mensajes")) chatBox.innerHTML = '';
-            chatBox.innerHTML += `<div class="msg-huesped"><b>Mensaje Entrante:</b> ${msg}</div>`;
+            try {
+                const data = JSON.parse(msgRaw);
+                const idCliente = data.id_cliente;
+                const texto = data.msg;
+                
+                chatBox.innerHTML += `
+                    <div class="msg-huesped" style="cursor: pointer;" title="Haz clic para responder a este huésped"
+                         onclick="document.getElementById('chat-id-cliente').value = '${idCliente}'; document.getElementById('chat-input').focus();">
+                        <b>Mensaje Entrante [Huésped #${idCliente}]:</b> ${texto}
+                    </div>`;
+            } catch (e) {
+                chatBox.innerHTML += `<div class="msg-huesped"><b>Mensaje Entrante:</b> ${msgRaw}</div>`;
+            }
             chatBox.scrollTop = chatBox.scrollHeight;
         });
 
@@ -367,14 +326,11 @@
             const payload = JSON.stringify({ id_cliente: parseInt(idCliente), msg: inputMsg });
             chat.enviarMensaje(payload);
             
-            if(chatBox.innerHTML.includes("Esperando mensajes")) chatBox.innerHTML = '';
             chatBox.innerHTML += `<div class="msg-admin"><b>Tú al Cliente #${idCliente}:</b> ${inputMsg}</div>`;
-            
             document.getElementById('chat-input').value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
         });
 
-        // 3. Inicializar Carga de Datos Inmediata
         cargarCuartos();
         cargarReservas();
         cargarHuespedes();

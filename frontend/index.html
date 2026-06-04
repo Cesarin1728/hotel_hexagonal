@@ -11,7 +11,6 @@
         .menu a { text-decoration: none; color: #3498db; font-weight: bold; }
         .menu a.logout { color: #e74c3c; }
         
-        /* ¡AQUÍ ESTÁ LA SOLUCIÓN! Agregamos padding-bottom para liberar espacio al hacer scroll */
         .catalogo { display: flex; flex-direction: column; gap: 20px; padding-bottom: 320px; }
         
         .cuarto-card { display: flex; background: white; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); overflow: hidden; border: 1px solid #eef2f3; }
@@ -24,13 +23,17 @@
         .btn-reservar { padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; width: fit-content; transition: background 0.2s; }
         .btn-reservar:hover { background: #2980b9; }
 
-        /* Área del Chat flotante */
+        /* Chat flotante */
         .chat-container { position: fixed; bottom: 20px; right: 20px; width: 320px; background: white; border: 1px solid #ccc; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); display: flex; flex-direction: column; }
         .chat-header { background: #2c3e50; color: white; padding: 10px; font-weight: bold; border-top-left-radius: 7px; border-top-right-radius: 7px; }
         .chat-messages { height: 200px; overflow-y: auto; padding: 10px; font-size: 13px; background: #fcfcfc; }
         .chat-input-area { display: flex; border-top: 1px solid #eee; }
         .chat-input-area input { flex: 1; padding: 10px; border: none; border-bottom-left-radius: 7px; }
         .chat-input-area button { padding: 10px; background: #27ae60; color: white; border: none; cursor: pointer; border-bottom-right-radius: 7px; }
+
+        /* Modal de Reserva Rápida */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -38,7 +41,6 @@
     <div class="navbar">
         <h1>Catálogo de Habitaciones</h1>
         <div class="menu">
-            <a href="checkout.html">🛒 Mi Carrito</a>
             <a href="historial.html">📅 Mis Reservas</a>
             <a href="login.html" class="logout" onclick="localStorage.clear()">Entrar / Salir</a>
         </div>
@@ -48,53 +50,71 @@
         <p style="text-align: center; color: #95a5a6;">Cargando habitaciones disponibles...</p>
     </div>
 
+    <div id="modal-reserva" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="margin-top:0; color:#2c3e50;">📅 Reservar Habitación #<span id="reserva-id-cuarto"></span></h3>
+            <form id="form-reserva">
+                <input type="hidden" id="r-id-cuarto">
+                
+                <label style="font-weight: bold; display: block; margin-top: 10px; color: #34495e;">Fecha de Llegada:</label>
+                <input type="date" id="r-inicio" required style="width: 95%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px;">
+                
+                <label style="font-weight: bold; display: block; margin-top: 10px; color: #34495e;">Fecha de Salida:</label>
+                <input type="date" id="r-fin" required style="width: 95%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 5px;">
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                    <button type="button" onclick="document.getElementById('modal-reserva').style.display='none'" style="background: #95a5a6; padding: 10px; border: none; border-radius: 4px; color: white; cursor: pointer;">Cancelar</button>
+                    <button type="submit" id="btn-confirmar-reserva" style="background: #27ae60; padding: 10px; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold;">Confirmar Compra</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="chat-container">
         <div class="chat-header">💬 Chat Recepción</div>
         <div class="chat-messages" id="chat-mensajes">
-            <div style="color: #95a5a6; text-align: center; margin-top: 80px;">Inicia sesión para chatear</div>
+            <div style="color: #95a5a6; text-align: center; margin-top: 80px;">Conectando...</div>
         </div>
         <div class="chat-input-area">
-            <input type="text" id="input-msg" placeholder="Escribe tu duda aquí..." disabled>
-            <button id="btn-enviar-msg" disabled>Enviar</button>
+            <input type="text" id="input-msg" placeholder="Escribe tu duda aquí...">
+            <button id="btn-enviar-msg">Enviar</button>
         </div>
     </div>
 
     <script type="module">
-        import { cuartoAdapter } from './src/presentation/app.js';
+        import { cuartoAdapter, reservaAdapter } from './src/presentation/app.js';
         import { ChatAdapter } from './src/infrastructure/websocket/ChatAdapter.js';
 
         // ====================================================
-        // 1. REDIRECCIÓN AUTOMÁTICA SI EL USUARIO ES ADMIN
+        // 1. FORZADO DE LOGIN O REDIRECCIÓN AUTOMÁTICA ADMIN
         // ====================================================
         const tokenDeSesion = localStorage.getItem('token');
-        if (tokenDeSesion) {
+        if (!tokenDeSesion) {
+            window.location.href = "login.html";
+        } else {
             try {
                 const payloadBase64 = tokenDeSesion.split('.')[1];
                 const datosUsuario = JSON.parse(atob(payloadBase64));
-                
-                // Si el token dictamina que eres Administrador, saltas directo al panel de control
                 if (datosUsuario.role === 'Administrador' || datosUsuario.rol === 'Administrador') {
                     window.location.href = 'admin.html';
                 }
             } catch (error) {
-                console.error("Error al verificar el rol del token:", error);
+                console.error("Token de sesión corrupto o inválido");
             }
         }
 
         // ====================================================
-        // 2. MÓDULO: CARGAR EL CATÁLOGO DESDE LA API
+        // 2. MÓDULO: RENDERIZAR HABITACIONES DESDE LA API
         // ====================================================
         const contenedor = document.getElementById('contenedor-cuartos');
 
         const renderizarCatalogo = async () => {
             try {
                 const cuartos = await cuartoAdapter.listarTodos();
-                
                 if (cuartos.length === 0) {
                     contenedor.innerHTML = `<p style="text-align: center; color: #95a5a6;">No hay habitaciones registradas en este momento.</p>`;
                     return;
                 }
-
                 contenedor.innerHTML = cuartos.map(c => `
                     <div class="cuarto-card">
                         <img class="cuarto-img" src="${c.imagen_url || 'https://via.placeholder.com/250x180?text=Sin+Foto'}" alt="${c.nombre}">
@@ -106,7 +126,7 @@
                             </div>
                             <div style="display: flex; justify-content: space-between; align-items: center;">
                                 <div class="cuarto-precio">$${c.precio} <span style="font-size:12px; font-weight:normal; color:#7f8c8d;">/ noche</span></div>
-                                <button class="btn-reservar" onclick="window.reservar(${c.id})">Reservar</button>
+                                <button class="btn-reservar" onclick="window.abrirModalReserva(${c.id})">Reservar</button>
                             </div>
                         </div>
                     </div>
@@ -117,58 +137,71 @@
         };
 
         // ====================================================
-        // 3. MÓDULO: GESTIÓN DE MÚLTIPLES ELEMENTOS EN EL CARRITO
+        // 3. MÓDULO: RESERVA E INSTANTÁNEA DIRECTA
         // ====================================================
-        window.reservar = (id) => {
-            if (!tokenDeSesion) {
-                alert("Debes iniciar sesión.");
-                window.location.href = "login.html"; 
-                return;
-            }
-
-            let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
-            
-            // Creamos una entrada única para esta instancia de reserva
-            const nuevaReserva = {
-                idReservaTemporal: Date.now(), // Identificador único basado en el tiempo
-                cuartoId: id
-            };
-            
-            carrito.push(nuevaReserva);
-            localStorage.setItem('carrito', JSON.stringify(carrito));
-            alert(`Habitación #${id} añadida. ¡Puedes añadir la misma habitación para otra fecha!`);
+        window.abrirModalReserva = (id) => {
+            document.getElementById('r-id-cuarto').value = id;
+            document.getElementById('reserva-id-cuarto').innerText = id;
+            document.getElementById('modal-reserva').style.display = 'flex';
         };
 
+        document.getElementById('form-reserva').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btn-confirmar-reserva');
+            btn.textContent = "Procesando..."; 
+            btn.disabled = true;
+
+            const idCuarto = document.getElementById('r-id-cuarto').value;
+            const strInicio = document.getElementById('r-inicio').value;
+            const strFin = document.getElementById('r-fin').value;
+
+            const fInicio = new Date(strInicio);
+            const fFin = new Date(strFin);
+            const nochesCalculadas = Math.ceil(Math.abs(fFin - fInicio) / (1000 * 60 * 60 * 24)) || 1;
+
+            const payloadBase64 = tokenDeSesion.split('.')[1];
+            const userPayload = JSON.parse(atob(payloadBase64));
+
+            const datosReserva = {
+                espacio: "Estándar",
+                fecha: strInicio + "T00:00:00", 
+                servicio_cuarto: false,
+                noches: nochesCalculadas,
+                id_cuarto: parseInt(idCuarto),
+                id_huesped: userPayload.id 
+            };
+
+            try {
+                await reservaAdapter.crearReserva(datosReserva, tokenDeSesion);
+                alert("¡Habitación reservada con éxito!");
+                window.location.href = 'historial.html';
+            } catch (err) {
+                alert("Error al procesar la reserva. Verifica que las fechas no se traslapen con otra estancia.");
+            } finally {
+                btn.textContent = "Confirmar Compra"; 
+                btn.disabled = false;
+            }
+        });
+
         // ====================================================
-        // 4. MÓDULO: CONEXIÓN AL CHAT EN TIEMPO REAL (WEBSOCKETS)
+        // 4. MÓDULO: WEBSOCKETS CHAT HUESPED
         // ====================================================
         const mensajesArea = document.getElementById('chat-mensajes');
         const inputMsg = document.getElementById('input-msg');
         const btnEnviarMsg = document.getElementById('btn-enviar-msg');
 
         if (tokenDeSesion) {
-            // Habilitar los campos si el huésped ya se autenticó
-            inputMsg.disabled = false;
-            btnEnviarMsg.disabled = false;
-            mensajesArea.innerHTML = `<div style="color: #27ae60; text-align: center;">Conectando con recepción...</div>`;
-
+            mensajesArea.innerHTML = '';
             const chat = new ChatAdapter('ws://localhost:8000');
             
             chat.conectar(tokenDeSesion, (msg) => {
-                if (mensajesArea.innerHTML.includes("Conectando con recepción")) {
-                    mensajesArea.innerHTML = '';
-                }
-                
-                // Pintar los mensajes entrantes del administrador o respuestas automatizadas
                 mensajesArea.innerHTML += `<div style="margin-bottom: 8px;"><b>Recepción:</b> ${msg}</div>`;
-                mensajesArea.scrollTop = mensajesArea.scrollHeight; // Auto scroll hacia abajo
+                mensajesArea.scrollTop = mensajesArea.scrollHeight;
             });
 
-            // Acción para enviar mensajes al servidor
             btnEnviarMsg.addEventListener('click', () => {
                 const texto = inputMsg.value.trim();
                 if (!texto) return;
-
                 chat.enviarMensaje(texto);
                 mensajesArea.innerHTML += `<div style="margin-bottom: 8px; text-align: right; color: #2980b9;"><b>Tú:</b> ${texto}</div>`;
                 inputMsg.value = '';
@@ -176,7 +209,6 @@
             });
         }
 
-        // Ejecutar la renderización del catálogo inmediatamente al cargar la pantalla
         renderizarCatalogo();
     </script>
 </body>
