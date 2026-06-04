@@ -6,130 +6,121 @@
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
         .navbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .navbar h1 { margin: 0; font-size: 22px; color: #2c3e50; }
-        .menu { display: flex; gap: 15px; align-items: center; }
+        .navbar h1 { margin: 0; font-size: 24px; color: #2c3e50; }
+        .menu { display: flex; gap: 20px; }
         .menu a { text-decoration: none; color: #3498db; font-weight: bold; }
-
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        th { background: #34495e; color: white; padding: 12px; text-align: center; }
-        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background: #f9f9f9; }
-
-        .btn-danger { background: #e74c3c; color: white; border: none; padding: 7px 14px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-danger:hover { background: #c0392b; }
-        .btn-cuenta { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .btn-cuenta:hover { background: #c0392b; }
-
-        .seccion-cuenta { background: white; padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-top: 30px; border-left: 4px solid #e74c3c; }
-        .seccion-cuenta h3 { margin: 0 0 8px; color: #e74c3c; }
-        .seccion-cuenta p { margin: 0 0 15px; color: #7f8c8d; font-size: 14px; }
+        .menu a.logout { color: #e74c3c; }
+        
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f2f2f2; color: #333; }
+        
+        .btn-peligro { background: #e74c3c; color: white; border: none; padding: 10px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .btn-peligro:hover { background: #c0392b; }
+        .zona-peligro { margin-top: 50px; padding: 20px; border: 1px solid #e74c3c; border-radius: 8px; background: #fadbd8; }
     </style>
 </head>
 <body>
 
     <div class="navbar">
-        <h1> Mis Reservas</h1>
+        <h1>Mi Historial de Reservas</h1>
         <div class="menu">
-            <a href="index.html">← Ver Catálogo</a>
-            <a href="login.html" style="color:#e74c3c;" onclick="localStorage.clear()">Cerrar Sesión</a>
+            <a href="index.html">Catálogo</a>
+            <a href="chat.html">Soporte (Chat)</a>
+            <a href="login.html" class="logout" onclick="localStorage.clear()">Entrar / Salir</a>
         </div>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Folio</th>
-                <th>Cuarto</th>
-                <th>Fecha</th>
-                <th>Noches</th>
-                <th>Costo Total</th>
-                <th>Servicio Cuarto</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="lista-reservas">
-            <tr><td colspan="7">Cargando tus reservas...</td></tr>
-        </tbody>
-    </table>
+    <div class="container">
+        <h2>Mis Estancias Programadas</h2>
+        <table id="tabla-reservas">
+            <thead>
+                <tr>
+                    <th>ID Reserva</th>
+                    <th>Habitación</th>
+                    <th>Fecha Llegada</th>
+                    <th>Noches</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla">
+                <tr><td colspan="5" style="text-align:center;">Cargando historial...</td></tr>
+            </tbody>
+        </table>
 
-    <div class="seccion-cuenta">
-        <h3> Precaución </h3>
-        <p>Al eliminar tu cuenta se borrarán permanentemente todas tus reservas e historial. Esta acción no se puede deshacer.</p>
-        <button class="btn-cuenta" onclick="window.eliminarCuenta()">Eliminar mi cuenta</button>
+        <div class="zona-peligro">
+            <h3 style="color: #c0392b; margin-top:0;">Zona de Peligro</h3>
+            <p>Si eliminas tu cuenta, se perderá todo tu historial y se cancelarán tus reservas activas de forma irreversible.</p>
+            <button class="btn-peligro" id="btn-eliminar-cuenta">Eliminar mi Cuenta</button>
+        </div>
     </div>
 
     <script type="module">
         import { reservaAdapter } from './src/presentation/app.js';
 
-        const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = 'login.html';
+        const tokenDeSesion = localStorage.getItem('token');
+        if (!tokenDeSesion) {
+            window.location.href = "login.html";
         }
 
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        const id_usuario = payload.id;
+        const cuerpoTabla = document.getElementById('cuerpo-tabla');
 
-        const cargarReservas = async () => {
+        const cargarHistorial = async () => {
             try {
-                const reservas = await reservaAdapter.listarPorHuesped(id_usuario, token);
-                const tbody = document.getElementById('lista-reservas');
+                const payloadBase64 = tokenDeSesion.split('.')[1];
+                const userPayload = JSON.parse(atob(payloadBase64));
 
+                const reservas = await reservaAdapter.listarPorHuesped(userPayload.id, tokenDeSesion);
+                
                 if (reservas.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="color:#95a5a6;">No tienes reservas todavía.</td></tr>';
+                    cuerpoTabla.innerHTML = '<tr><td colspan="5" style="text-align:center;">No tienes reservas activas.</td></tr>';
                     return;
                 }
 
-                tbody.innerHTML = reservas.map(r => `
+                cuerpoTabla.innerHTML = reservas.map(r => `
                     <tr>
-                        <td><b>#${r.id}</b></td>
-                        <td>Cuarto ${r.cuartoId}</td>
-                        <td>${r.fecha ? r.fecha.split('T')[0] : '—'}</td>
+                        <td>#${r.id}</td>
+                        <td>Habitación ${r.id_cuarto}</td>
+                        <td>${r.fecha.split('T')[0]}</td>
                         <td>${r.noches}</td>
-                        <td style="color:#27ae60; font-weight:bold;">$${r.costo}</td>
-                        <td>${r.servicioCuarto ? ' Sí' : ' No'}</td>
-                        <td><button class="btn-danger" onclick="window.eliminarReserva(${r.id})">Cancelar Reserva</button></td>
+                        <td><button class="btn-peligro" onclick="window.cancelarReserva(${r.id})">Cancelar</button></td>
                     </tr>
                 `).join('');
-            } catch (e) {
-                document.getElementById('lista-reservas').innerHTML =
-                    '<tr><td colspan="7" style="color:#e74c3c;">Error al cargar tus reservas.</td></tr>';
+            } catch (error) {
+                cuerpoTabla.innerHTML = '<tr><td colspan="5" style="text-align:center; color:red;">Error al cargar el historial.</td></tr>';
             }
         };
 
-        window.eliminarReserva = async (id) => {
-            if (!confirm(`¿Cancelar la reserva #${id}? Esta acción no se puede deshacer.`)) return;
-            try {
-                const res = await fetch(`http://localhost:8000/api/reservas/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error("No se pudo cancelar");
-                alert("Reserva cancelada correctamente.");
-                cargarReservas();
-            } catch (e) {
-                alert("Error: " + e.message);
+        window.cancelarReserva = async (idReserva) => {
+            if(confirm("¿Estás seguro de que deseas cancelar esta reserva?")) {
+                try {
+                    await reservaAdapter.eliminarReserva(idReserva, tokenDeSesion);
+                    alert("Reserva cancelada");
+                    cargarHistorial(); // Recargar la tabla
+                } catch(e) {
+                    alert("Error al cancelar");
+                }
             }
         };
 
-        window.eliminarCuenta = async () => {
-            if (!confirm(" ¿Estás seguro? Se eliminarán tu cuenta y TODAS tus reservas permanentemente.")) return;
-            if (!confirm("Esta acción es irreversible. ¿Confirmas?")) return;
-            try {
-                const res = await fetch('http://localhost:8000/api/auth/cuenta', {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (!res.ok) throw new Error("Error al eliminar cuenta");
-                alert("Tu cuenta ha sido eliminada.");
-                localStorage.clear();
-                window.location.href = 'login.html';
-            } catch (e) {
-                alert("Error: " + e.message);
+        document.getElementById('btn-eliminar-cuenta').addEventListener('click', async () => {
+            if(confirm("ESTO ES IRREVERSIBLE. ¿Estás absolutamente seguro de eliminar tu cuenta y reservas?")) {
+                try {
+                    await fetch('http://localhost:8000/api/auth/cuenta', {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${tokenDeSesion}` }
+                    });
+                    alert("Cuenta eliminada correctamente.");
+                    localStorage.clear();
+                    window.location.href = "login.html";
+                } catch(e) {
+                    alert("Hubo un problema al eliminar la cuenta");
+                }
             }
-        };
+        });
 
-        cargarReservas();
+        cargarHistorial();
     </script>
 </body>
 </html>
