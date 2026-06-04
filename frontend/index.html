@@ -41,7 +41,7 @@
     <div class="navbar">
         <h1>Catálogo de Habitaciones</h1>
         <div class="menu">
-            <a href="historial.html">📅 Mis Reservas</a>
+            <a href="historial.html"> Mis Reservas</a>
             <a href="login.html" class="logout" onclick="localStorage.clear()">Entrar / Salir</a>
         </div>
     </div>
@@ -52,7 +52,7 @@
 
     <div id="modal-reserva" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="margin-top:0; color:#2c3e50;">📅 Reservar Habitación #<span id="reserva-id-cuarto"></span></h3>
+            <h3 style="margin-top:0; color:#2c3e50;"> Reservar Habitación #<span id="reserva-id-cuarto"></span></h3>
             <form id="form-reserva">
                 <input type="hidden" id="r-id-cuarto">
                 
@@ -71,7 +71,7 @@
     </div>
 
     <div class="chat-container">
-        <div class="chat-header">💬 Chat Recepción</div>
+        <div class="chat-header"> Chat Recepción</div>
         <div class="chat-messages" id="chat-mensajes">
             <div style="color: #95a5a6; text-align: center; margin-top: 80px;">Conectando...</div>
         </div>
@@ -85,9 +85,6 @@
         import { cuartoAdapter, reservaAdapter } from './src/presentation/app.js';
         import { ChatAdapter } from './src/infrastructure/websocket/ChatAdapter.js';
 
-        // ====================================================
-        // 1. FORZADO DE LOGIN O REDIRECCIÓN AUTOMÁTICA ADMIN
-        // ====================================================
         const tokenDeSesion = localStorage.getItem('token');
         if (!tokenDeSesion) {
             window.location.href = "login.html";
@@ -103,9 +100,6 @@
             }
         }
 
-        // ====================================================
-        // 2. MÓDULO: RENDERIZAR HABITACIONES DESDE LA API
-        // ====================================================
         const contenedor = document.getElementById('contenedor-cuartos');
 
         const renderizarCatalogo = async () => {
@@ -136,9 +130,6 @@
             }
         };
 
-        // ====================================================
-        // 3. MÓDULO: RESERVA E INSTANTÁNEA DIRECTA
-        // ====================================================
         window.abrirModalReserva = (id) => {
             document.getElementById('r-id-cuarto').value = id;
             document.getElementById('reserva-id-cuarto').innerText = id;
@@ -183,9 +174,6 @@
             }
         });
 
-        // ====================================================
-        // 4. MÓDULO: WEBSOCKETS CHAT HUESPED
-        // ====================================================
         const mensajesArea = document.getElementById('chat-mensajes');
         const inputMsg = document.getElementById('input-msg');
         const btnEnviarMsg = document.getElementById('btn-enviar-msg');

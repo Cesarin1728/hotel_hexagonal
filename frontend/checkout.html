@@ -5,7 +5,7 @@
     <title>Checkout - Carrito</title>
 </head>
 <body style="font-family: Arial; padding: 20px;">
-    <h2>🛒 Confirmar Reservas (Checkout)</h2>
+    <h2> Confirmar Reservas (Checkout)</h2>
     <a href="index.html">← Volver al Catálogo</a>
     <hr>
     
@@ -24,14 +24,12 @@
         const btnPagar = document.getElementById('btn-pagar-todo');
         const mensajeVacio = document.getElementById('mensaje-vacio');
 
-        // Leer el arreglo del carrito
         let carrito = JSON.parse(localStorage.getItem('carrito')) || [];
 
         if (carrito.length === 0) {
             mensajeVacio.innerHTML = "<h3>Tu carrito está vacío.</h3>";
         } else {
             btnPagar.style.display = 'block';
-            // Dibujar un bloque de fechas por cada Cuarto en el carrito
             contenedorCarrito.innerHTML = carrito.map(id => `
                 <div class="item-reserva" data-id="${id}" style="background: #f4f6f7; padding: 15px; border-radius: 8px; border: 1px solid #bdc3c7;">
                     <h3 style="margin-top:0; color:#2c3e50;">Habitación #${id}</h3>
@@ -50,14 +48,12 @@
             `).join('');
         }
 
-        // Función para eliminar un solo cuarto del carrito
         window.eliminarItem = (id) => {
             carrito = carrito.filter(itemId => itemId !== id);
             localStorage.setItem('carrito', JSON.stringify(carrito));
-            location.reload(); // Recargar para actualizar la vista
+            location.reload();
         };
 
-        // Procesar TODAS las reservas al mismo tiempo
         btnPagar.addEventListener('click', async () => {
             const token = localStorage.getItem('token');
             if (!token) return alert("No has iniciado sesión.");
@@ -65,7 +61,6 @@
             const payloadBase64 = token.split('.')[1];
             const userPayload = JSON.parse(atob(payloadBase64));
 
-            // Recopilar los datos de todos los cuadros HTML
             const bloques = document.querySelectorAll('.item-reserva');
             const promesasDeReserva = [];
 
@@ -76,7 +71,7 @@
 
                 if (!strInicio || !strFin) {
                     alert(`Faltan fechas en la Habitación #${idCuarto}`);
-                    return; // Detenemos el proceso si falta info
+                    return; 
                 }
 
                 const fInicio = new Date(strInicio);
@@ -92,20 +87,18 @@
                     id_huesped: userPayload.id 
                 };
 
-                // Añadimos la petición al arreglo de promesas (sin ejecutarla todavía)
                 promesasDeReserva.push(reservaAdapter.crearReserva(datosReserva, token));
             }
 
             try {
-                // Ejecutamos TODAS las peticiones al backend simultáneamente
                 btnPagar.textContent = "Procesando...";
                 btnPagar.disabled = true;
 
                 await Promise.all(promesasDeReserva);
                 
                 alert("¡Todas las reservas fueron procesadas con éxito!");
-                localStorage.removeItem('carrito'); // Vaciamos el carrito completo
-                window.location.href = 'historial.html'; // Vamos a ver las reservas
+                localStorage.removeItem('carrito'); 
+                window.location.href = 'historial.html'; 
 
             } catch (err) { 
                 alert("Error al procesar: " + err.message + "\n(Verifica que las fechas de alguna de las habitaciones no estén ya ocupadas)."); 

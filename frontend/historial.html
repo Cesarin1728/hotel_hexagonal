@@ -2,84 +2,134 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Mis Reservas - Historial</title>
+    <title>Mis Reservas</title>
     <style>
         body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
-        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        h2 { color: #2c3e50; margin-top: 0; }
-        .btn-back { display: inline-block; margin-bottom: 20px; text-decoration: none; color: #3498db; font-weight: bold; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 12px; text-align: center; }
-        th { background: #34495e; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        .status-badge { padding: 5px 10px; border-radius: 4px; font-weight: bold; font-size: 12px; background: #2ecc71; color: white; }
+        .navbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px; }
+        .navbar h1 { margin: 0; font-size: 22px; color: #2c3e50; }
+        .menu { display: flex; gap: 15px; align-items: center; }
+        .menu a { text-decoration: none; color: #3498db; font-weight: bold; }
+
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        th { background: #34495e; color: white; padding: 12px; text-align: center; }
+        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
+        tr:last-child td { border-bottom: none; }
+        tr:hover { background: #f9f9f9; }
+
+        .btn-danger { background: #e74c3c; color: white; border: none; padding: 7px 14px; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        .btn-danger:hover { background: #c0392b; }
+        .btn-cuenta { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
+        .btn-cuenta:hover { background: #c0392b; }
+
+        .seccion-cuenta { background: white; padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-top: 30px; border-left: 4px solid #e74c3c; }
+        .seccion-cuenta h3 { margin: 0 0 8px; color: #e74c3c; }
+        .seccion-cuenta p { margin: 0 0 15px; color: #7f8c8d; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <a href="index.html" class="btn-back">← Volver al Catálogo</a>
-        <h2>📅 Mi Historial de Reservas</h2>
-        <p style="color: #7f8c8d;">Aquí puedes consultar los cuartos que has adquirido y las fechas programadas.</p>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th>Folio</th>
-                    <th>Habitación</th>
-                    <th>Fecha de Entrada</th>
-                    <th>Noches</th>
-                    <th>Total Pagado</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody id="lista-historial">
-                <tr>
-                    <td colspan="6" style="color: #95a5a6;">Cargando tus reservas...</td>
-                </tr>
-            </tbody>
-        </table>
+    <div class="navbar">
+        <h1> Mis Reservas</h1>
+        <div class="menu">
+            <a href="index.html">← Ver Catálogo</a>
+            <a href="login.html" style="color:#e74c3c;" onclick="localStorage.clear()">Cerrar Sesión</a>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Folio</th>
+                <th>Cuarto</th>
+                <th>Fecha</th>
+                <th>Noches</th>
+                <th>Costo Total</th>
+                <th>Servicio Cuarto</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="lista-reservas">
+            <tr><td colspan="7">Cargando tus reservas...</td></tr>
+        </tbody>
+    </table>
+
+    <div class="seccion-cuenta">
+        <h3> Precaución </h3>
+        <p>Al eliminar tu cuenta se borrarán permanentemente todas tus reservas e historial. Esta acción no se puede deshacer.</p>
+        <button class="btn-cuenta" onclick="window.eliminarCuenta()">Eliminar mi cuenta</button>
     </div>
 
     <script type="module">
         import { reservaAdapter } from './src/presentation/app.js';
 
         const token = localStorage.getItem('token');
-        const tabla = document.getElementById('lista-historial');
-
         if (!token) {
-            window.location.href = "login.html";
+            window.location.href = 'login.html';
         }
 
-        const cargarHistorial = async () => {
-            try {
-                const payloadBase64 = token.split('.')[1];
-                const userPayload = JSON.parse(atob(payloadBase64));
-                
-                const misReservas = await reservaAdapter.listarPorHuesped(userPayload.id, token);
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const id_usuario = payload.id;
 
-                if (misReservas.length === 0) {
-                    tabla.innerHTML = `<tr><td colspan="6" style="color: #95a5a6;">Aún no has realizado ninguna reserva en el hotel.</td></tr>`;
+        const cargarReservas = async () => {
+            try {
+                const reservas = await reservaAdapter.listarPorHuesped(id_usuario, token);
+                const tbody = document.getElementById('lista-reservas');
+
+                if (reservas.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="7" style="color:#95a5a6;">No tienes reservas todavía.</td></tr>';
                     return;
                 }
 
-                tabla.innerHTML = misReservas.map(r => `
+                tbody.innerHTML = reservas.map(r => `
                     <tr>
                         <td><b>#${r.id}</b></td>
-                        <td>Habitación #${r.cuartoId}</td>
-                        <td>${r.fecha ? r.fecha.split('T')[0] : 'Sin fecha'}</td>
-                        <td>${r.noches} noches</td>
-                        <td style="color: #27ae60; font-weight: bold;">$${r.costo}</td>
-                        <td><span class="status-badge">Confirmada</span></td>
+                        <td>Cuarto ${r.cuartoId}</td>
+                        <td>${r.fecha ? r.fecha.split('T')[0] : '—'}</td>
+                        <td>${r.noches}</td>
+                        <td style="color:#27ae60; font-weight:bold;">$${r.costo}</td>
+                        <td>${r.servicioCuarto ? ' Sí' : ' No'}</td>
+                        <td><button class="btn-danger" onclick="window.eliminarReserva(${r.id})">Cancelar Reserva</button></td>
                     </tr>
                 `).join('');
-
-            } catch (error) {
-                tabla.innerHTML = `<tr><td colspan="6" style="color: #e74c3c;">Error al conectar con el servidor de reservas o token expirado.</td></tr>`;
+            } catch (e) {
+                document.getElementById('lista-reservas').innerHTML =
+                    '<tr><td colspan="7" style="color:#e74c3c;">Error al cargar tus reservas.</td></tr>';
             }
         };
 
-        cargarHistorial();
+        window.eliminarReserva = async (id) => {
+            if (!confirm(`¿Cancelar la reserva #${id}? Esta acción no se puede deshacer.`)) return;
+            try {
+                const res = await fetch(`http://localhost:8000/api/reservas/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("No se pudo cancelar");
+                alert("Reserva cancelada correctamente.");
+                cargarReservas();
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        };
+
+        window.eliminarCuenta = async () => {
+            if (!confirm(" ¿Estás seguro? Se eliminarán tu cuenta y TODAS tus reservas permanentemente.")) return;
+            if (!confirm("Esta acción es irreversible. ¿Confirmas?")) return;
+            try {
+                const res = await fetch('http://localhost:8000/api/auth/cuenta', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Error al eliminar cuenta");
+                alert("Tu cuenta ha sido eliminada.");
+                localStorage.clear();
+                window.location.href = 'login.html';
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        };
+
+        cargarReservas();
     </script>
 </body>
 </html>

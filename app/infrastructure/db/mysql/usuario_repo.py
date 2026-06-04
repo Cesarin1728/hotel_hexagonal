@@ -32,3 +32,8 @@ class MySQLUsuarioRepository(UsuarioRepository):
                 id=m["ID_Usuario"], email=m["Email"],
                 password_hash=m["PasswordHash"], rol=m["Rol"]
             )
+
+    def delete(self, id: int) -> None:
+        with engine.connect() as conn:
+            conn.execute(text("DELETE FROM `Usuario` WHERE `ID_Usuario` = :id"), {"id": id})
+            conn.commit()
