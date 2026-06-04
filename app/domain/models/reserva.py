@@ -1,4 +1,4 @@
-# Nuestro modelo, representa la entidad reserca. Solo son datos puros
+# Nuestro modelo, representa la entidad. Solo son datos puros
 
 from dataclasses import dataclass  # dataclass es una forma rápida de crear clases que solo guardan datos. En este caso cumple para hacer nuestro dominio 
 from typing import Optional 
