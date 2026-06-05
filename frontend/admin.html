@@ -83,7 +83,7 @@
         <div id="tab-reservas" class="tab">
             <h3 style="margin-top:0;">Historial General de Reservas</h3>
             <table>
-                <thead><tr><th>Folio Reserva</th><th>ID del Huésped</th><th>Habitación</th><th>Fecha de Llegada</th><th>Noches</th><th>Ingreso ($)</th></tr></thead>
+                <thead><tr><th>Folio Reserva</th><th>ID del Huésped</th><th>Habitación</th><th>Fecha de Llegada</th><th>Noches</th><th>Ingreso ($)</th><th>Acciones</th></tr></thead>
                 <tbody id="lista-reservas"></tbody>
             </table>
         </div>
@@ -254,6 +254,7 @@
             } catch(e) { alert("Error al borrar."); }
         };
 
+        // PASO 2: SE AGREGÓ EL BOTÓN "BORRAR" A CADA FILA
         const cargarReservas = async () => {
             try {
                 const reservas = await reservaAdapter.listarTodas(token);
@@ -265,9 +266,27 @@
                         <td>${r.fecha ? r.fecha.split('T')[0] : 'Sin Fecha'}</td>
                         <td>${r.noches}</td>
                         <td style="color: green; font-weight: bold;">$${r.costo}</td>
+                        <td>
+                            <button class="btn-danger" onclick="window.eliminarReservaAdmin(${r.id})"> Borrar</button>
+                        </td>
                     </tr>
                 `).join('');
             } catch { }
+        };
+
+        window.eliminarReservaAdmin = async (id) => {
+            if(!confirm("¿Estás seguro de que deseas eliminar la Reserva #" + id + " de este huésped?")) return;
+            try {
+                const response = await fetch(`http://localhost:8000/api/reservas/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error();
+                alert('Reserva eliminada con éxito.');
+                cargarReservas(); 
+            } catch(e) { 
+                alert("Error al intentar eliminar la reserva."); 
+            }
         };
 
         const cargarHuespedes = async () => {
