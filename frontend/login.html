@@ -1,108 +1,121 @@
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><title>Login</title></head>
-<body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iniciar Sesión - Hotel Hexagonal</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+        }
+        .card-login {
+            border: none;
+            border-radius: 12px;
+        }
+        .btn-primary-custom {
+            background-color: #2980b9;
+            border-color: #2980b9;
+            font-weight: bold;
+            padding: 12px;
+            transition: background-color 0.2s;
+        }
+        .btn-primary-custom:hover {
+            background-color: #21618c;
+            border-color: #21618c;
+        }
+    </style>
+</head>
+<body class="d-flex justify-content-center align-items-center">
 
-    <h2>Iniciar Sesión</h2>
-    <form id="login-form">
-        <input type="email" id="user" placeholder="Email" required>
-        <input type="password" id="pass" placeholder="Contraseña" required>
-        <button type="submit">Entrar</button>
-    </form>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-12 col-sm-8 col-md-6 col-lg-4">
+                
+                <div class="card card-login shadow-sm p-4 bg-white">
+                    <div class="card-body">
+                        <h2 class="card-title text-center mb-4 fw-bold text-dark">Iniciar Sesión</h2>
+                        
+                        <form id="form-login">
+                            <div class="mb-3">
+                                <label for="username" class="form-label fw-semibold text-secondary">Correo Electrónico</label>
+                                <input type="email" class="form-control form-control-lg fs-6" id="username" placeholder="ejemplo@correo.com" required>
+                            </div>
+                            
+                            <div class="mb-4">
+                                <label for="password" class="form-label fw-semibold text-secondary">Contraseña</label>
+                                <input type="password" class="form-control form-control-lg fs-6" id="password" placeholder="••••••••" required>
+                            </div>
+                            
+                            <button type="submit" id="btn-ingresar" class="btn btn-primary-custom w-100 text-white btn-lg fs-6 shadow-sm">
+                                Ingresar
+                            </button>
+                        </form>
+                        
+                        <div id="error-box" class="alert alert-danger mt-3 text-center fw-medium border-start border-danger border-4" role="alert" style="display: none;"></div>
+                    </div>
+                </div>
 
-    <hr>
-
-    <h2>Registrarse</h2>
-    <form id="register-form">
-        <input type="email" id="reg-email" placeholder="Email" required>
-        <input type="password" id="reg-pass" placeholder="Contraseña" required>
-        <input type="text" id="reg-username" placeholder="Username" required>
-        <input type="number" id="reg-edad" placeholder="Edad" min="18" required>
-        <select id="reg-miembro">
-            <option value="false">Sin membresía</option>
-            <option value="true">Con membresía (Premium)</option>
-        </select>
-        <button type="submit">Crear Cuenta</button>
-    </form>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
-        import { authAdapter } from './src/presentation/app.js';
-
-        const BACKEND = 'http://localhost:8000';
-
-        // Si ya hay sesión válida, redirigir directo
-        const tokenExistente = localStorage.getItem('token');
-        if (tokenExistente) {
-            try {
-                const payload = JSON.parse(atob(tokenExistente.split('.')[1]));
-                window.location.href = payload.rol === 'Administrador' ? 'admin.html' : 'index.html';
-            } catch(e) { localStorage.clear(); }
-        }
-
-        // LOGIN
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
+        document.getElementById('form-login').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const u = document.getElementById('user').value;
-            const p = document.getElementById('pass').value;
-            try {
-                const data = await authAdapter.login(u, p);
-                localStorage.setItem('token', data.access_token);
-                const payload = JSON.parse(atob(data.access_token.split('.')[1]));
-                window.location.href = payload.rol === 'Administrador' ? 'admin.html' : 'index.html';
-            } catch (error) { alert("Credenciales inválidas."); }
-        });
+            
+            const btn = document.getElementById('btn-ingresar');
+            const errorBox = document.getElementById('error-box');
+            
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Verificando...`;
+            btn.disabled = true;
+            errorBox.style.display = 'none';
 
-        // REGISTRO
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email    = document.getElementById('reg-email').value.trim();
-            const pass     = document.getElementById('reg-pass').value;
-            const username = document.getElementById('reg-username').value.trim();
-            const edad     = parseInt(document.getElementById('reg-edad').value);
-            const miembro  = document.getElementById('reg-miembro').value === 'true';
+            const email = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
 
-            if (edad < 18) return alert("Debes ser mayor de edad.");
-
-            const btn = e.target.querySelector('button');
-            btn.textContent = "Registrando..."; btn.disabled = true;
+            const params = new URLSearchParams();
+            params.append('username', email);
+            params.append('password', password);
 
             try {
-                // Paso 1: crear usuario
-                const resReg = await fetch(`${BACKEND}/api/auth/register`, {
+                const response = await fetch('http://localhost:8000/api/auth/login', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password: pass, rol: 'Cliente' })
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: params
                 });
-                if (!resReg.ok) {
-                    const err = await resReg.json();
-                    throw new Error(err.detail || "Error al registrar");
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Credenciales inválidas');
                 }
 
-                // Paso 2: login para obtener token
-                const data = await authAdapter.login(email, pass);
-                const token = data.access_token;
-                localStorage.setItem('token', token);
+                localStorage.setItem('token', data.access_token);
+                if (data.refresh_token) {
+                    localStorage.setItem('refresh_token', data.refresh_token);
+                }
 
-                // Paso 3: crear perfil huésped
-                const resHuesped = await fetch(`${BACKEND}/api/huespedes/`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({
-                        username, clave: pass, miembro,
-                        economia: miembro ? 'Premium' : 'Estandar', edad
-                    })
-                });
-                if (!resHuesped.ok) throw new Error("Error al crear perfil de huésped");
+                const payloadBase64 = data.access_token.split('.')[1];
+                const userPayload = JSON.parse(atob(payloadBase64));
 
-                alert(`¡Bienvenido, ${username}!`);
-                window.location.href = 'index.html';
-            } catch (err) {
-                alert("Error: " + err.message);
-                localStorage.clear();
+                if (userPayload.rol === 'Administrador' || userPayload.role === 'Administrador') {
+                    window.location.href = 'admin.html';
+                } else {
+                    window.location.href = 'index.html';
+                }
+
+            } catch (error) {
+                errorBox.textContent = error.message;
+                errorBox.style.display = 'block';
             } finally {
-                btn.textContent = "Crear Cuenta"; btn.disabled = false;
+                btn.textContent = "Ingresar";
+                btn.disabled = false;
             }
         });
+
+        localStorage.clear();
     </script>
 </body>
 </html>
