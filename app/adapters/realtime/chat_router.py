@@ -15,7 +15,6 @@ jwt_manager = JWTManager()
 class ConnectionManager:
     def __init__(self):
         self.active_clients: dict[int, WebSocket] = {} 
-        # Mantenemos la lista para soportar múltiples administradores conectados
         self.active_admins: list[WebSocket] = [] 
 
     async def connect_client(self, id_cliente: int, websocket: WebSocket):
@@ -35,7 +34,6 @@ class ConnectionManager:
             self.active_admins.remove(websocket)
 
     async def send_to_admin(self, id_cliente: int, mensaje: str):
-        # FIX 1: Enviamos el mensaje limpio, sin el prefijo duplicado
         for admin_ws in self.active_admins:
             try:
                 await admin_ws.send_text(json.dumps({
@@ -46,7 +44,6 @@ class ConnectionManager:
                 pass
 
     async def send_to_client(self, id_cliente: int, mensaje: str) -> bool:
-        # FIX 2: Retornamos True si se entregó, False si el cliente no está
         if id_cliente in self.active_clients:
             try:
                 await self.active_clients[id_cliente].send_text(f"Admin: {mensaje}")
@@ -81,14 +78,13 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
 
                 chat_service.guardar_mensaje_admin(target_cliente, respuesta_admin)
                 
-                # FIX 2: Avisamos al admin si el huésped cerró el navegador o se desconectó
                 entregado = await manager.send_to_client(target_cliente, respuesta_admin)
                 if not entregado:
                     await websocket.send_text(json.dumps({
                         "msg": f"⚠️ El huésped #{target_cliente} ya no está conectado en este momento."
                     }))
                     
-        except Exception: # Protegemos contra cierres de ventana del admin
+        except Exception:
             manager.disconnect_admin(websocket)
 
     elif rol == "Cliente":
@@ -103,11 +99,12 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 data = await websocket.receive_text()
                 bot_response = chat_service.procesar_mensaje_cliente(usuario_id, data)
                 
+                await manager.send_to_admin(usuario_id, data)
+                
                 if bot_response:
                     await websocket.send_text(f"Bot: {bot_response}")
                 else:
                     await websocket.send_text("Bot: Un administrador le contestará pronto")
-                    await manager.send_to_admin(usuario_id, data)
                     
         except Exception:
             manager.disconnect_client(usuario_id)
