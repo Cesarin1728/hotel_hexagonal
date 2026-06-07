@@ -81,7 +81,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str):
                 entregado = await manager.send_to_client(target_cliente, respuesta_admin)
                 if not entregado:
                     await websocket.send_text(json.dumps({
-                        "msg": f"⚠️ El huésped #{target_cliente} ya no está conectado en este momento."
+                        "msg": f" El huésped #{target_cliente} ya no está conectado en este momento."
                     }))
                     
         except Exception:

@@ -45,7 +45,6 @@ def obtener(id: int, current_user: dict = Depends(obtener_usuario_actual)):
 @router.post("/", response_model=ReservaResponse)
 def crear(data: ReservaRequest, current_user: dict = Depends(obtener_usuario_actual)):
     if current_user.get("rol") != "Administrador":
-        # Resolver el id_huesped real desde el token — ignoramos el id_huesped que manda el cliente
         id_huesped_real = _resolver_id_huesped(current_user.get("id"))
         data.id_huesped = id_huesped_real
     return service.create_reserva(
