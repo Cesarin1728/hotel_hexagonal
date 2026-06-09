@@ -25,7 +25,6 @@ export class ReservaApiAdapter {
         return data.map(item => new Reserva(item));
     }
 
-    // NUEVO MÉTODO QUE TE FALTABA
     async listarPorHuesped(id_huesped, token) {
         const response = await fetch(`${this.baseUrl}/api/reservas/huesped/${id_huesped}`, {
             headers: { 'Authorization': `Bearer ${token}` }

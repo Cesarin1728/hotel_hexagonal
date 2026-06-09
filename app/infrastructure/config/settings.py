@@ -15,7 +15,7 @@ class Settings(BaseSettings):
     AWS_ENDPOINT_URL: str | None = os.getenv("AWS_ENDPOINT_URL", None)
     
     class Config:
-        env_file = ".env" # esta línea carga el .env
+        env_file = ".env"
 
 settings = Settings()
 

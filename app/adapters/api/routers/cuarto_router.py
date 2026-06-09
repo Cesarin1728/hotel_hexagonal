@@ -17,7 +17,7 @@ def listar():
 def crear(
     nombre: str = Form(...), 
     detalles: str = Form(...),
-    precio: str = Form(...), # Recibimos como string del Form
+    precio: str = Form(...),
     espacio: str = Form(...),
     imagen: UploadFile = File(...),
     _=Depends(requerir_admin)
@@ -42,7 +42,6 @@ def actualizar(
     _=Depends(requerir_admin)
 ):
     try:
-        # Si envían archivo, lo procesamos; si no, pasamos None
         file_stream = imagen.file if imagen else None
         filename = imagen.filename if imagen else None
         content_type = imagen.content_type if imagen else None

@@ -24,7 +24,6 @@ class CuartoService:
         if not cuarto_existente:
             raise Exception("Cuarto no encontrado")
         
-        # Mantenemos la imagen original si no suben una nueva
         imagen_url = cuarto_existente.imagen_url
         if file_stream:
             imagen_url = self.storage.upload_file(file_stream, filename, content_type)
