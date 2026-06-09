@@ -179,7 +179,34 @@
             const chat = new ChatAdapter('ws://localhost:8000');
             
             chat.conectar(tokenDeSesion, (msg) => {
-                mensajesArea.innerHTML += `<div class="mb-2"><strong class="text-dark">Recepción:</strong> <span class="text-secondary">${msg}</span></div>`;
+                // Evaluamos si es un mensaje de historial antiguo del cliente
+                if (msg.startsWith("Cliente") || msg.startsWith("Bot:")) {
+                    if (msg.startsWith("Cliente")) {
+                        // Limpiamos el prefijo 'Cliente ID: ' para que solo quede el texto
+                        const textoLimpio = msg.split(': ').slice(1).join(': ');
+                        mensajesArea.innerHTML += `<div class="mb-2 text-end"><strong class="text-primary">Tú:</strong> <span class="text-dark">${textoLimpio}</span></div>`;
+                    } else {
+                        // Mensaje del bot automático
+                        const textoBot = msg.replace('Bot: ', '');
+                        mensajesArea.innerHTML += `<div class="mb-2"><strong class="text-secondary">Bot:</strong> <span class="text-secondary">${textoBot}</span></div>`;
+                    }
+                } 
+                // Evaluamos si es una respuesta del Admin (en vivo o de historial)
+                else if (msg.startsWith("Admin:")) {
+                    const textoAdmin = msg.replace('Admin: ', '');
+                    mensajesArea.innerHTML += `<div class="mb-2"><strong class="text-dark">Recepción:</strong> <span class="text-secondary">${textoAdmin}</span></div>`;
+                } 
+                // Mensaje en vivo (JSON o crudo) que viene del sistema
+                else {
+                    try {
+                        const data = JSON.parse(msg);
+                        // Si es aviso del sistema ("Administrador ocupado", etc)
+                        mensajesArea.innerHTML += `<div class="mb-2 text-center text-muted fst-italic small">${data.msg || msg}</div>`;
+                    } catch (e) {
+                        // Fallback de seguridad si no encaja en nada
+                        mensajesArea.innerHTML += `<div class="mb-2"><strong class="text-dark">Recepción:</strong> <span class="text-secondary">${msg}</span></div>`;
+                    }
+                }
                 mensajesArea.scrollTop = mensajesArea.scrollHeight;
             });
 
