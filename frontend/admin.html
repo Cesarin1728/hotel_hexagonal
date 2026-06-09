@@ -3,136 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <title>Backoffice - Panel de Administrador</title>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; background-color: #f8f9fa; margin: 0; }
-        h2 { color: #2c3e50; }
-        .nav-header { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
-        
-        /* Sistema de Pestañas */
-        .tab-container { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        /* Mantenemos la lógica de pestañas JS intacta */
         .tab { display: none; }
         .tab.active { display: block; }
         
-        .nav-btn { padding: 12px 20px; cursor: pointer; background: #ecf0f1; border: none; border-radius: 5px; margin-right: 5px; font-weight: bold; color: #34495e; transition: 0.3s; }
-        .nav-btn:hover { background: #bdc3c7; }
-        .nav-btn.active { background: #2980b9; color: white; }
-        
-        /* Tablas */
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
-        th { background: #34495e; color: white; }
-        tr:nth-child(even) { background-color: #f9f9f9; }
-        
-        /* Formularios y Chat */
-        input, button { padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; }
-        button { cursor: pointer; background: #27ae60; color: white; border: none; font-weight: bold; transition: 0.2s; }
-        button:hover { filter: brightness(1.1); }
-        button.btn-danger { background: #e74c3c; }
-        button.btn-edit { background: #f39c12; }
-        
-        /* Contenedor del Chat e Historial */
-        .chat-box { border: 1px solid #bdc3c7; background: #fafafa; height: 350px; overflow-y: auto; padding: 15px; margin-bottom: 15px; border-radius: 5px; font-family: 'Segoe UI', Arial, sans-serif; }
-        .msg-huesped { background: #e1f5fe; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: left; border-left: 4px solid #03a9f4; transition: background 0.2s; }
-        .msg-huesped:hover { background: #b3e5fc; }
+        /* Chat box scroll */
+        .chat-box { height: 350px; overflow-y: auto; font-family: monospace; }
+        .msg-huesped { background: #e1f5fe; padding: 8px; border-radius: 5px; margin-bottom: 5px; border-left: 4px solid #03a9f4; }
         .msg-admin { background: #e8f5e9; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: right; border-right: 4px solid #4caf50; }
-        .msg-system { text-align: center; color: #7f8c8d; font-size: 13px; margin-bottom: 10px; font-style: italic; background: #f0f0f0; padding: 5px; border-radius: 4px; }
+        .msg-system { text-align: center; color: #6c757d; font-size: 13px; font-style: italic; }
 
-        /* Modal de Edición */
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 8px; width: 400px; max-width: 90%; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-content label { font-weight: bold; color: #2c3e50; font-size: 14px; display: block; margin-top: 10px; }
+        /* Overlay modal nativo */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1050; justify-content: center; align-items: center; }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
-    <div class="nav-header">
-        <h2> Panel de Control - Administrador</h2>
-        <a href="index.html" style="text-decoration: none; color: #2980b9; font-weight: bold; margin-right: 15px;"> Ver Catálogo del Hotel</a>
-        <a href="login.html" style="text-decoration: none; color: #e74c3c; font-weight: bold;" onclick="localStorage.clear()">Cerrar Sesión</a>
-    </div>
-
-    <div style="margin-bottom: 20px;">
-        <button class="nav-btn active" onclick="window.showTab('tab-cuartos')"> Gestión de Cuartos</button>
-        <button class="nav-btn" onclick="window.showTab('tab-reservas')"> Todas las Reservas</button>
-        <button class="nav-btn" onclick="window.showTab('tab-huespedes')"> Gestión de Huéspedes</button>
-        <button class="nav-btn" onclick="window.showTab('tab-chat')"> Soporte en Vivo (Chat)</button>
-    </div>
-
-    <div class="tab-container">
-        
-        <div id="tab-cuartos" class="tab active">
-            <h3 style="margin-top:0;">Dar de Alta Nuevo Cuarto</h3>
-            <form id="form-cuarto" style="display: flex; gap: 10px; flex-wrap: wrap; background: #f4f6f7; padding: 15px; border-radius: 5px;">
-                <input type="text" id="c-nombre" placeholder="Nombre" required style="flex: 1; min-width: 200px;">
-                <input type="text" id="c-detalles" placeholder="Detalles o Descripción" required style="flex: 2; min-width: 250px;">
-                <input type="number" id="c-precio" placeholder="Precio $" required style="width: 100px;">
-                <input type="text" id="c-espacio" placeholder="Capacidad" required style="width: 150px;">
-                <input type="file" id="c-imagen" accept="image/*" required style="flex: 1;">
-                <button type="submit">Guardar y Subir Imagen</button>
-            </form>
-            
-            <hr style="border: 0; border-top: 1px solid #ddd; margin: 20px 0;">
-            
-            <h3>Inventario de Cuartos</h3>
-            <table>
-                <thead><tr><th>ID</th><th>Fotografía</th><th>Nombre</th><th>Precio</th><th>Capacidad</th><th>Acciones</th></tr></thead>
-                <tbody id="lista-cuartos"></tbody>
-            </table>
-        </div>
-
-        <div id="tab-reservas" class="tab">
-            <h3 style="margin-top:0;">Historial General de Reservas</h3>
-            <table>
-                <thead><tr><th>Folio Reserva</th><th>ID del Huésped</th><th>Habitación</th><th>Fecha de Llegada</th><th>Noches</th><th>Ingreso ($)</th><th>Acciones</th></tr></thead>
-                <tbody id="lista-reservas"></tbody>
-            </table>
-        </div>
-
-        <div id="tab-huespedes" class="tab">
-            <h3 style="margin-top:0;">Directorio de Huéspedes Registrados</h3>
-            <table>
-                <thead><tr><th>ID Huésped</th><th>Nombre de Usuario</th><th>Membresía</th><th>Acciones Críticas</th></tr></thead>
-                <tbody id="lista-huespedes"></tbody>
-            </table>
-        </div>
-
-        <div id="tab-chat" class="tab">
-            <h3 style="margin-top:0;">Centro de Soporte (WebSockets)</h3>
-            <div class="chat-box" id="chat-box">
-                <div style="text-align: center; color: #95a5a6; margin-top: 100px;">Conectando al servidor...</div>
-            </div>
-            <div style="display: flex; gap: 10px;">
-                <input type="number" id="chat-id-cliente" placeholder="ID del Huésped a responder" required style="width: 250px;">
-                <input type="text" id="chat-input" placeholder="Escribe tu respuesta aquí..." required style="flex: 1;">
-                <button id="chat-send">Enviar Respuesta</button>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm mb-4 p-3">
+        <div class="container-fluid">
+            <span class="navbar-brand mb-0 h1 fw-bold text-dark">Panel de Control - Administrador</span>
+            <div class="d-flex gap-3 align-items-center">
+                <a href="index.html" class="text-decoration-none fw-bold text-primary">Ver Catálogo del Hotel</a>
+                <button class="btn btn-outline-danger fw-bold" onclick="localStorage.clear(); window.location.href='login.html'">Cerrar Sesión</button>
             </div>
         </div>
-    </div>
+    </nav>
 
-    <div id="modal-editar" class="modal-overlay">
-        <div class="modal-content">
-            <h3 style="margin-top:0; color:#2980b9;"> Editar Habitación</h3>
-            <form id="form-editar-cuarto">
-                <input type="hidden" id="e-id">
-                <label>Nombre de la Habitación:</label>
-                <input type="text" id="e-nombre" style="width: 95%;" required>
-                <label>Descripción / Detalles:</label>
-                <input type="text" id="e-detalles" style="width: 95%;" required>
-                <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;">
-                        <label>Precio ($):</label>
-                        <input type="number" id="e-precio" style="width: 90%;" required>
-                    </div>
-                    <div style="flex: 1;">
-                        <label>Capacidad:</label>
-                        <input type="text" id="e-espacio" style="width: 90%;" required>
+    <div class="container-fluid px-4">
+        <!-- Navegación de pestañas -->
+        <div class="mb-4 d-flex gap-2 flex-wrap">
+            <button class="btn btn-outline-primary nav-btn active" onclick="window.showTab('tab-cuartos')">Gestión de Cuartos</button>
+            <button class="btn btn-outline-primary nav-btn" onclick="window.showTab('tab-reservas')">Todas las Reservas</button>
+            <button class="btn btn-outline-primary nav-btn" onclick="window.showTab('tab-huespedes')">Gestión de Huéspedes</button>
+            <button class="btn btn-outline-primary nav-btn" onclick="window.showTab('tab-chat')">Chat</button>
+        </div>
+
+        <!-- Contenedor Principal -->
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-body p-4">
+                
+                <!-- PESTAÑA: CUARTOS -->
+                <div id="tab-cuartos" class="tab active">
+                    <h4 class="mb-3 text-secondary">Dar de Alta Nuevo Cuarto</h4>
+                    <form id="form-cuarto" class="row g-3 bg-light p-3 rounded border align-items-end mb-4">
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Nombre</label>
+                            <input type="text" class="form-control" id="c-nombre" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold">Descripción</label>
+                            <input type="text" class="form-control" id="c-detalles" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label fw-bold">Precio $</label>
+                            <input type="number" class="form-control" id="c-precio" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-bold">Capacidad</label>
+                            <input type="text" class="form-control" id="c-espacio" required>
+                        </div>
+                        <div class="col-md-9">
+                            <label class="form-label fw-bold">Fotografía</label>
+                            <input type="file" class="form-control" id="c-imagen" accept="image/*" required>
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-success w-100 fw-bold">Subir Cuarto</button>
+                        </div>
+                    </form>
+                    
+                    <h4 class="text-secondary mt-5 mb-3">Inventario de Cuartos</h4>
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered align-middle text-center">
+                            <thead class="table-dark"><tr><th>ID</th><th>Fotografía</th><th>Nombre</th><th>Precio</th><th>Capacidad</th><th>Acciones</th></tr></thead>
+                            <tbody id="lista-cuartos"></tbody>
+                        </table>
                     </div>
                 </div>
-                <label>Actualizar Imagen (Opcional):</label>
-                <input type="file" id="e-imagen" accept="image/*" style="width: 95%; margin-bottom: 20px;">
-                <div style="display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" onclick="document.getElementById('modal-editar').style.display='none'" style="background: #95a5a6;">Cancelar</button>
-                    <button type="submit" id="btn-guardar-edicion">Guardar Cambios</button>
+
+                <!-- PESTAÑA: RESERVAS -->
+                <div id="tab-reservas" class="tab">
+                    <h4 class="mb-3 text-secondary">Historial General de Reservas</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered align-middle text-center">
+                            <thead class="table-dark"><tr><th>Folio</th><th>Huésped ID</th><th>Habitación</th><th>Llegada</th><th>Noches</th><th>Ingreso ($)</th><th>Acciones</th></tr></thead>
+                            <tbody id="lista-reservas"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA: HUÉSPEDES -->
+                <div id="tab-huespedes" class="tab">
+                    <h4 class="mb-3 text-secondary">Directorio de Huéspedes</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered align-middle text-center">
+                            <thead class="table-dark"><tr><th>ID Huésped</th><th>Nombre de Usuario</th><th>Membresía</th><th>Acciones Críticas</th></tr></thead>
+                            <tbody id="lista-huespedes"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- PESTAÑA: CHAT -->
+                <div id="tab-chat" class="tab">
+                    <h4 class="mb-3 text-secondary">Centro de Soporte (WebSockets)</h4>
+                    <div class="chat-box border bg-light p-3 rounded mb-3" id="chat-box">
+                        <div class="text-center text-muted mt-5">Conectando al servidor...</div>
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="number" class="form-control" id="chat-id-cliente" placeholder="ID del Huésped" required>
+                        </div>
+                        <div class="col-md-7">
+                            <input type="text" class="form-control" id="chat-input" placeholder="Escribe tu respuesta aquí..." required>
+                        </div>
+                        <div class="col-md-2">
+                            <button id="chat-send" class="btn btn-primary w-100 fw-bold">Enviar</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Cuarto -->
+    <div id="modal-editar" class="modal-overlay">
+        <div class="card p-4 shadow" style="width: 450px;">
+            <h4 class="text-primary fw-bold mb-3">Editar Habitación</h4>
+            <form id="form-editar-cuarto">
+                <input type="hidden" id="e-id">
+                <div class="mb-2">
+                    <label class="form-label fw-bold">Nombre</label>
+                    <input type="text" class="form-control" id="e-nombre" required>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label fw-bold">Detalles</label>
+                    <input type="text" class="form-control" id="e-detalles" required>
+                </div>
+                <div class="row g-2 mb-2">
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Precio ($)</label>
+                        <input type="number" class="form-control" id="e-precio" required>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-bold">Capacidad</label>
+                        <input type="text" class="form-control" id="e-espacio" required>
+                    </div>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Actualizar Imagen (Opcional)</label>
+                    <input type="file" class="form-control" id="e-imagen" accept="image/*">
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary" onclick="document.getElementById('modal-editar').style.display='none'">Cancelar</button>
+                    <button type="submit" class="btn btn-warning fw-bold" id="btn-guardar-edicion">Guardar Cambios</button>
                 </div>
             </form>
         </div>
@@ -151,9 +178,15 @@
 
         window.showTab = (tabId) => {
             document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                b.classList.remove('active', 'btn-primary', 'text-white');
+                b.classList.add('btn-outline-primary');
+            });
             document.getElementById(tabId).classList.add('active');
-            if (event && event.target) event.target.classList.add('active');
+            if (event && event.target) {
+                event.target.classList.remove('btn-outline-primary');
+                event.target.classList.add('active', 'btn-primary', 'text-white');
+            }
         };
 
         let cuartosEnMemoria = [];
@@ -162,14 +195,14 @@
                 cuartosEnMemoria = await cuartoAdapter.listarTodos();
                 document.getElementById('lista-cuartos').innerHTML = cuartosEnMemoria.map(c => `
                     <tr>
-                        <td><b>#${c.id}</b></td>
-                        <td><img src="${c.imagen_url}" width="60" style="border-radius:5px;"></td>
+                        <td class="fw-bold">#${c.id}</td>
+                        <td><img src="${c.imagen_url}" width="60" class="rounded"></td>
                         <td>${c.nombre}</td>
-                        <td style="color: green; font-weight: bold;">$${c.precio}</td>
+                        <td class="text-success fw-bold">$${c.precio}</td>
                         <td>${c.espacio}</td>
                         <td>
-                            <button class="btn-edit" onclick="window.abrirModalEditar(${c.id})"> Editar</button>
-                            <button class="btn-danger" onclick="window.eliminarCuarto(${c.id})"> Borrar</button>
+                            <button class="btn btn-sm btn-warning fw-bold" onclick="window.abrirModalEditar(${c.id})">Editar</button>
+                            <button class="btn btn-sm btn-danger fw-bold" onclick="window.eliminarCuarto(${c.id})">Borrar</button>
                         </td>
                     </tr>
                 `).join('');
@@ -179,7 +212,8 @@
         document.getElementById('form-cuarto').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = e.target.querySelector('button');
-            btn.textContent = "Subiendo..."; btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Subiendo...`; 
+            btn.disabled = true;
 
             const formData = new FormData();
             formData.append('nombre', document.getElementById('c-nombre').value);
@@ -199,7 +233,7 @@
                 document.getElementById('form-cuarto').reset();
                 cargarCuartos();
             } catch { alert('Fallo al crear el cuarto.'); }
-            finally { btn.textContent = "Guardar y Subir Imagen"; btn.disabled = false; }
+            finally { btn.innerHTML = "Subir Cuarto"; btn.disabled = false; }
         });
 
         window.abrirModalEditar = (id) => {
@@ -217,7 +251,7 @@
         document.getElementById('form-editar-cuarto').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btn-guardar-edicion');
-            btn.textContent = "Actualizando..."; btn.disabled = true;
+            btn.innerHTML = `<span class="spinner-border spinner-border-sm"></span> Actualizando...`; btn.disabled = true;
 
             const id = document.getElementById('e-id').value;
             const formData = new FormData();
@@ -240,7 +274,7 @@
                 document.getElementById('modal-editar').style.display = 'none';
                 cargarCuartos();
             } catch { alert('Error al actualizar.'); }
-            finally { btn.textContent = "Guardar Cambios"; btn.disabled = false; }
+            finally { btn.innerHTML = "Guardar Cambios"; btn.disabled = false; }
         });
 
         window.eliminarCuarto = async (id) => {
@@ -254,20 +288,19 @@
             } catch(e) { alert("Error al borrar."); }
         };
 
-        // PASO 2: SE AGREGÓ EL BOTÓN "BORRAR" A CADA FILA
         const cargarReservas = async () => {
             try {
                 const reservas = await reservaAdapter.listarTodas(token);
                 document.getElementById('lista-reservas').innerHTML = reservas.map(r => `
                     <tr>
-                        <td><b>#${r.id}</b></td>
-                        <td>Huésped ID: ${r.huespedId || r.id_huesped}</td>
-                        <td>Cuarto ${r.cuartoId}</td>
-                        <td>${r.fecha ? r.fecha.split('T')[0] : 'Sin Fecha'}</td>
+                        <td class="fw-bold">#${r.id}</td>
+                        <td>${r.huespedId || r.id_huesped}</td>
+                        <td>C-${r.cuartoId}</td>
+                        <td>${r.fecha ? r.fecha.split('T')[0] : '—'}</td>
                         <td>${r.noches}</td>
-                        <td style="color: green; font-weight: bold;">$${r.costo}</td>
+                        <td class="text-success fw-bold">$${r.costo}</td>
                         <td>
-                            <button class="btn-danger" onclick="window.eliminarReservaAdmin(${r.id})"> Borrar</button>
+                            <button class="btn btn-sm btn-danger fw-bold" onclick="window.eliminarReservaAdmin(${r.id})">Borrar</button>
                         </td>
                     </tr>
                 `).join('');
@@ -295,10 +328,10 @@
                 const data = await res.json();
                 document.getElementById('lista-huespedes').innerHTML = data.map(h => `
                     <tr>
-                        <td><b>${h.id || h.ID_Huesped}</b></td>
+                        <td class="fw-bold">${h.id || h.ID_Huesped}</td>
                         <td>${h.username || h.Username}</td>
-                        <td>${h.miembro ? '⭐ Premium' : 'Estándar'}</td>
-                        <td><button class="btn-danger" onclick="window.eliminarHuesped(${h.id || h.ID_Huesped})">Eliminar Permanente</button></td>
+                        <td><span class="badge ${h.miembro ? 'bg-warning text-dark' : 'bg-secondary'}">${h.miembro ? '⭐ Premium' : 'Estándar'}</span></td>
+                        <td><button class="btn btn-sm btn-danger fw-bold" onclick="window.eliminarHuesped(${h.id || h.ID_Huesped})">Eliminar Permanente</button></td>
                     </tr>
                 `).join('');
             } catch { }
@@ -328,7 +361,7 @@
                 if (data.id_cliente !== undefined && data.id_cliente !== null) {
                     const idCliente = data.id_cliente;
                     chatBox.innerHTML += `
-                        <div class="msg-huesped" style="cursor: pointer;" title="Haz clic para responder automáticamente"
+                        <div class="msg-huesped" style="cursor: pointer;" title="Responder"
                              onclick="document.getElementById('chat-id-cliente').value = '${idCliente}'; document.getElementById('chat-input').focus();">
                             <b>Huésped #${idCliente}:</b> ${texto}
                         </div>`;
@@ -345,16 +378,12 @@
             const idCliente = document.getElementById('chat-id-cliente').value;
             const inputMsg = document.getElementById('chat-input').value;
             
-            if(!idCliente || !inputMsg) return alert("Por favor, ingresa el ID del huésped y escribe una respuesta.");
+            if(!idCliente || !inputMsg) return alert("Ingresa ID y mensaje.");
 
-            const payloadObject = {
-                id_cliente: parseInt(idCliente),
-                msg: inputMsg
-            };
-            
+            const payloadObject = { id_cliente: parseInt(idCliente), msg: inputMsg };
             chatInstance.enviarMensaje(JSON.stringify(payloadObject));
             
-            chatBox.innerHTML += `<div class="msg-admin"><b>Tú (al Cliente #${idCliente}):</b> ${inputMsg}</div>`;
+            chatBox.innerHTML += `<div class="msg-admin"><b>Admin (a #${idCliente}):</b> ${inputMsg}</div>`;
             document.getElementById('chat-input').value = '';
             chatBox.scrollTop = chatBox.scrollHeight;
         });

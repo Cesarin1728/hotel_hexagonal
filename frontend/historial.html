@@ -3,69 +3,62 @@
 <head>
     <meta charset="UTF-8">
     <title>Mis Reservas</title>
-    <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 0; padding: 20px; background: #f8f9fa; }
-        .navbar { display: flex; justify-content: space-between; align-items: center; background: white; padding: 15px 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 30px; }
-        .navbar h1 { margin: 0; font-size: 22px; color: #2c3e50; }
-        .menu { display: flex; gap: 15px; align-items: center; }
-        .menu a { text-decoration: none; color: #3498db; font-weight: bold; }
-
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        th { background: #34495e; color: white; padding: 12px; text-align: center; }
-        td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover { background: #f9f9f9; }
-
-        .btn-danger { background: #e74c3c; color: white; border: none; padding: 7px 14px; border-radius: 5px; cursor: pointer; font-weight: bold; }
-        .btn-danger:hover { background: #c0392b; }
-        .btn-cuenta { background: #e74c3c; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 14px; }
-        .btn-cuenta:hover { background: #c0392b; }
-
-        .seccion-cuenta { background: white; padding: 20px 25px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); margin-top: 30px; border-left: 4px solid #e74c3c; }
-        .seccion-cuenta h3 { margin: 0 0 8px; color: #e74c3c; }
-        .seccion-cuenta p { margin: 0 0 15px; color: #7f8c8d; font-size: 14px; }
-    </style>
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
-<body>
+<body class="bg-light">
 
-    <div class="navbar">
-        <h1> Mis Reservas</h1>
-        <div class="menu">
-            <a href="index.html"> Ver Catálogo</a>
-            <a href="login.html" style="color:#e74c3c;" onclick="localStorage.clear()">Cerrar Sesión</a>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-5 p-3">
+        <div class="container">
+            <span class="navbar-brand mb-0 h1 fw-bold text-dark fs-4">Mis Reservas</span>
+            <div class="d-flex gap-3 align-items-center">
+                <a href="index.html" class="text-decoration-none fw-bold text-primary">Ver Catálogo</a>
+                <button class="btn btn-outline-danger fw-bold btn-sm" onclick="localStorage.clear(); window.location.href='login.html'">Cerrar Sesión</button>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Folio</th>
-                <th>Cuarto</th>
-                <th>Fecha</th>
-                <th>Noches</th>
-                <th>Costo Total</th>
-                <th>Servicio Cuarto</th>
-                <th>Acciones</th>
-            </tr>
-        </thead>
-        <tbody id="lista-reservas">
-            <tr><td colspan="7">Cargando tus reservas...</td></tr>
-        </tbody>
-    </table>
+    <div class="container">
+        <!-- Tabla de Reservas -->
+        <div class="card shadow-sm border-0 mb-5">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped align-middle text-center mb-0">
+                        <thead class="table-dark">
+                            <tr>
+                                <th class="py-3">Folio</th>
+                                <th class="py-3">Cuarto</th>
+                                <th class="py-3">Fecha de Llegada</th>
+                                <th class="py-3">Noches</th>
+                                <th class="py-3">Costo Total</th>
+                                <th class="py-3">Servicio</th>
+                                <th class="py-3">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="lista-reservas">
+                            <tr><td colspan="7" class="py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div>Cargando tus reservas...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-    <div class="seccion-cuenta">
-        <h3> Precaución </h3>
-        <p>Al eliminar tu cuenta se borrarán permanentemente todas tus reservas e historial. Esta acción no se puede deshacer.</p>
-        <button class="btn-cuenta" onclick="window.eliminarCuenta()">Eliminar mi cuenta</button>
+        <!-- Zona de Peligro -->
+        <div class="alert alert-danger border-start border-danger border-4 shadow-sm p-4 d-flex justify-content-between align-items-center flex-wrap gap-3" role="alert">
+            <div>
+                <h4 class="alert-heading fw-bold text-danger mb-1">Zona de Precaución</h4>
+                <p class="mb-0 text-dark">Al eliminar tu cuenta se borrarán permanentemente todas tus reservas e historial. Esta acción no se puede deshacer.</p>
+            </div>
+            <button class="btn btn-danger fw-bold px-4" onclick="window.eliminarCuenta()">Eliminar mi cuenta</button>
+        </div>
     </div>
 
     <script type="module">
         import { reservaAdapter } from './src/presentation/app.js';
 
         const token = localStorage.getItem('token');
-        if (!token) {
-            window.location.href = 'login.html';
-        }
+        if (!token) window.location.href = 'login.html';
 
         const payload = JSON.parse(atob(token.split('.')[1]));
         const id_usuario = payload.id;
@@ -76,24 +69,23 @@
                 const tbody = document.getElementById('lista-reservas');
 
                 if (reservas.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" style="color:#95a5a6;">No tienes reservas todavía.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="7" class="py-5 text-muted fw-bold">No tienes reservas registradas todavía.</td></tr>';
                     return;
                 }
 
                 tbody.innerHTML = reservas.map(r => `
                     <tr>
-                        <td><b>#${r.id}</b></td>
-                        <td>Cuarto ${r.cuartoId}</td>
+                        <td class="fw-bold text-secondary">#${r.id}</td>
+                        <td>Habitación ${r.cuartoId}</td>
                         <td>${r.fecha ? r.fecha.split('T')[0] : '—'}</td>
-                        <td>${r.noches}</td>
-                        <td style="color:#27ae60; font-weight:bold;">$${r.costo}</td>
-                        <td>${r.servicioCuarto ? ' Sí' : ' No'}</td>
-                        <td><button class="btn-danger" onclick="window.eliminarReserva(${r.id})">Cancelar Reserva</button></td>
+                        <td>${r.noches} <small class="text-muted">noches</small></td>
+                        <td class="text-success fw-bold fs-5">$${r.costo}</td>
+                        <td><span class="badge ${r.servicioCuarto ? 'bg-info' : 'bg-secondary'}">${r.servicioCuarto ? 'Sí' : 'No'}</span></td>
+                        <td><button class="btn btn-outline-danger btn-sm fw-bold" onclick="window.eliminarReserva(${r.id})">Cancelar</button></td>
                     </tr>
                 `).join('');
             } catch (e) {
-                document.getElementById('lista-reservas').innerHTML =
-                    '<tr><td colspan="7" style="color:#e74c3c;">Error al cargar tus reservas.</td></tr>';
+                document.getElementById('lista-reservas').innerHTML = '<tr><td colspan="7" class="text-danger py-4 fw-bold">Error al cargar tus reservas.</td></tr>';
             }
         };
 
@@ -107,13 +99,11 @@
                 if (!res.ok) throw new Error("No se pudo cancelar");
                 alert("Reserva cancelada correctamente.");
                 cargarReservas();
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            } catch (e) { alert("Error: " + e.message); }
         };
 
         window.eliminarCuenta = async () => {
-            if (!confirm(" ¿Estás seguro? Se eliminarán tu cuenta y TODAS tus reservas permanentemente.")) return;
+            if (!confirm("⚠️ ¿Estás seguro? Se eliminarán tu cuenta y TODAS tus reservas permanentemente.")) return;
             if (!confirm("Esta acción es irreversible. ¿Confirmas?")) return;
             try {
                 const res = await fetch('http://localhost:8000/api/auth/cuenta', {
@@ -121,12 +111,10 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!res.ok) throw new Error("Error al eliminar cuenta");
-                alert("Tu cuenta ha sido eliminada.");
+                alert("Tu cuenta ha sido eliminada exitosamente.");
                 localStorage.clear();
                 window.location.href = 'login.html';
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
+            } catch (e) { alert("Error: " + e.message); }
         };
 
         cargarReservas();
