@@ -7,6 +7,7 @@ from app.infrastructure.db.mysql.usuario_repo import MySQLUsuarioRepository
 from app.infrastructure.db.mysql.huesped_repo import PostgresHuespedRepository
 from app.infrastructure.security.bcrypt_hasher import BcryptAdapter
 from app.infrastructure.security.jwt_manager import JWTManager
+from app.domain.models.huesped import Huesped
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticación"])
 
@@ -20,6 +21,18 @@ huesped_repo = PostgresHuespedRepository()
 @router.post("/register", response_model=UsuarioResponse)
 def register(data: UserCreateRequest):
     u = auth_service.registrar_usuario(data.email, data.password, data.rol)
+
+    huesped = Huesped(
+        id=None,
+        id_usuario=u.id,
+        username=data.email,
+        clave=data.password,
+        miembro=False,
+        economia="Media",
+        edad=18
+    )
+    huesped_repo.create(huesped)
+
     return UsuarioResponse(id=u.id, email=u.email, rol=u.rol)
 
 @router.post("/login", response_model=TokenResponse)
