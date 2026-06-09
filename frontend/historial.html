@@ -3,12 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Mis Reservas</title>
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm mb-5 p-3">
         <div class="container">
             <span class="navbar-brand mb-0 h1 fw-bold text-dark fs-4">Mis Reservas</span>
@@ -44,11 +42,10 @@
             </div>
         </div>
 
-        <!-- Zona de Peligro -->
         <div class="alert alert-danger border-start border-danger border-4 shadow-sm p-4 d-flex justify-content-between align-items-center flex-wrap gap-3" role="alert">
             <div>
-                <h4 class="alert-heading fw-bold text-danger mb-1">Zona de Precaución</h4>
-                <p class="mb-0 text-dark">Al eliminar tu cuenta se borrarán permanentemente todas tus reservas e historial. Esta acción no se puede deshacer.</p>
+                <h4 class="alert-heading fw-bold text-danger mb-1">Eliminar cuenta</h4>
+                <p class="mb-0 text-dark">Al eliminar tu cuenta se borrarán permanentemente todas tus reservas e historial</p>
             </div>
             <button class="btn btn-danger fw-bold px-4" onclick="window.eliminarCuenta()">Eliminar mi cuenta</button>
         </div>
@@ -103,8 +100,7 @@
         };
 
         window.eliminarCuenta = async () => {
-            if (!confirm("⚠️ ¿Estás seguro? Se eliminarán tu cuenta y TODAS tus reservas permanentemente.")) return;
-            if (!confirm("Esta acción es irreversible. ¿Confirmas?")) return;
+            if (!confirm("Se eliminarán tu cuenta y TODAS tus reservas permanentemente.")) return;
             try {
                 const res = await fetch('http://localhost:8000/api/auth/cuenta', {
                     method: 'DELETE',

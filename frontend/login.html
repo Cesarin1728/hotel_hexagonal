@@ -14,7 +14,6 @@
 <div class="container">
 <div class="row justify-content-center gap-4 py-5">
 
-    <!-- Iniciar sesión -->
     <div class="col-12 col-md-4">
         <div class="card shadow-sm p-4">
             <h5 class="fw-bold mb-3">Iniciar sesión</h5>
@@ -31,7 +30,6 @@
         </div>
     </div>
 
-    <!-- Crear cuenta -->
     <div class="col-12 col-md-4">
         <div class="card shadow-sm p-4">
             <h5 class="fw-bold mb-3">Crear cuenta</h5>
@@ -110,12 +108,12 @@
             const data = await res.json();
             if (!res.ok) throw new Error(data.detail || 'Error al crear la cuenta');
 
-            showMsg(msg, '¡Cuenta creada! Ya puedes iniciar sesión.', 'success');
+            showMsg(msg, 'Cuenta creada', 'success');
             document.getElementById('reg-email').value = '';
             document.getElementById('reg-password').value = '';
 
         } catch (err) {
-            showMsg(msg, err.message, 'danger');
+            showMsg(msg, "Correo mal escrito", 'danger');
         } finally {
             btn.disabled = false; btn.textContent = 'Crear cuenta';
         }

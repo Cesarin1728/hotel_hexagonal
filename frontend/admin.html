@@ -3,26 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <title>Backoffice - Panel de Administrador</title>
-    <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Mantenemos la lógica de pestañas JS intacta */
         .tab { display: none; }
         .tab.active { display: block; }
         
-        /* Chat box scroll */
         .chat-box { height: 350px; overflow-y: auto; font-family: monospace; }
         .msg-huesped { background: #e1f5fe; padding: 8px; border-radius: 5px; margin-bottom: 5px; border-left: 4px solid #03a9f4; }
         .msg-admin { background: #e8f5e9; padding: 8px; border-radius: 5px; margin-bottom: 5px; text-align: right; border-right: 4px solid #4caf50; }
         .msg-system { text-align: center; color: #6c757d; font-size: 13px; font-style: italic; }
 
-        /* Overlay modal nativo */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1050; justify-content: center; align-items: center; }
     </style>
 </head>
 <body class="bg-light">
 
-    <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-white bg-white shadow-sm mb-4 p-3">
         <div class="container-fluid">
             <span class="navbar-brand mb-0 h1 fw-bold text-dark">Panel de Control - Administrador</span>
@@ -34,7 +29,6 @@
     </nav>
 
     <div class="container-fluid px-4">
-        <!-- Navegación de pestañas -->
         <div class="mb-4 d-flex gap-2 flex-wrap">
             <button class="btn btn-outline-primary nav-btn active" onclick="window.showTab('tab-cuartos')">Gestión de Cuartos</button>
             <button class="btn btn-outline-primary nav-btn" onclick="window.showTab('tab-reservas')">Todas las Reservas</button>
@@ -42,11 +36,9 @@
             <button class="btn btn-outline-primary nav-btn" onclick="window.showTab('tab-chat')">Chat</button>
         </div>
 
-        <!-- Contenedor Principal -->
         <div class="card shadow-sm border-0 mb-5">
             <div class="card-body p-4">
                 
-                <!-- PESTAÑA: CUARTOS -->
                 <div id="tab-cuartos" class="tab active">
                     <h4 class="mb-3 text-secondary">Dar de Alta Nuevo Cuarto</h4>
                     <form id="form-cuarto" class="row g-3 bg-light p-3 rounded border align-items-end mb-4">
@@ -84,7 +76,6 @@
                     </div>
                 </div>
 
-                <!-- PESTAÑA: RESERVAS -->
                 <div id="tab-reservas" class="tab">
                     <h4 class="mb-3 text-secondary">Historial General de Reservas</h4>
                     <div class="table-responsive">
@@ -95,7 +86,6 @@
                     </div>
                 </div>
 
-                <!-- PESTAÑA: HUÉSPEDES -->
                 <div id="tab-huespedes" class="tab">
                     <h4 class="mb-3 text-secondary">Directorio de Huéspedes</h4>
                     <div class="table-responsive">
@@ -106,7 +96,6 @@
                     </div>
                 </div>
 
-                <!-- PESTAÑA: CHAT -->
                 <div id="tab-chat" class="tab">
                     <h4 class="mb-3 text-secondary">Centro de Soporte (WebSockets)</h4>
                     <div class="chat-box border bg-light p-3 rounded mb-3" id="chat-box">
@@ -129,7 +118,6 @@
         </div>
     </div>
 
-    <!-- Modal Editar Cuarto -->
     <div id="modal-editar" class="modal-overlay">
         <div class="card p-4 shadow" style="width: 450px;">
             <h4 class="text-primary fw-bold mb-3">Editar Habitación</h4>
@@ -330,15 +318,15 @@
                     <tr>
                         <td class="fw-bold">${h.id || h.ID_Huesped}</td>
                         <td>${h.username || h.Username}</td>
-                        <td><span class="badge ${h.miembro ? 'bg-warning text-dark' : 'bg-secondary'}">${h.miembro ? '⭐ Premium' : 'Estándar'}</span></td>
-                        <td><button class="btn btn-sm btn-danger fw-bold" onclick="window.eliminarHuesped(${h.id || h.ID_Huesped})">Eliminar Permanente</button></td>
+                        <td><span class="badge ${h.miembro ? 'bg-warning text-dark' : 'bg-secondary'}">${h.miembro ? ' Premium' : 'Estándar'}</span></td>
+                        <td><button class="btn btn-sm btn-danger fw-bold" onclick="window.eliminarHuesped(${h.id || h.ID_Huesped})">Eliminar huesped</button></td>
                     </tr>
                 `).join('');
             } catch { }
         };
 
         window.eliminarHuesped = async (id) => {
-            if(!confirm("⚠️ ¿Confirmar eliminación del huésped? Se borrarán también sus reservas.")) return;
+            if(!confirm(" Se borrarán también sus reservas.")) return;
             try {
                 await fetch(`http://localhost:8000/api/huespedes/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
                 cargarHuespedes();
