@@ -17,10 +17,23 @@
     <div class="col-12 col-md-4">
         <div class="card shadow-sm p-4">
             <h5 class="fw-bold mb-3">Iniciar sesión</h5>
+
             <div class="mb-3">
                 <label class="form-label">Correo</label>
-                <input type="email" class="form-control" id="login-email" placeholder="ejemplo@correo.com">
+                <input type="email" 
+                    class="form-control" 
+                    id="login-email" 
+                    placeholder="ejemplo@correo.com"
+                    required
+                    pattern="(?:[a-z0-9!#$%&'*+/=?^_{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_{|}~-]+)*|&quot;(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\
+            \[\x01-\x09\x0b\x0c\x0e-\x7f])*&quot;)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|
+            \[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\
+            \[\x01-\x09\x0b\x0c\x0e-\x7f])+)\]
+            )"
+                    title="Correo mal escrito">
             </div>
+
+
             <div class="mb-3">
                 <label class="form-label">Contraseña</label>
                 <input type="password" class="form-control" id="login-password" placeholder="••••••••">
@@ -35,7 +48,17 @@
             <h5 class="fw-bold mb-3">Crear cuenta</h5>
             <div class="mb-3">
                 <label class="form-label">Correo</label>
-                <input type="email" class="form-control" id="reg-email" placeholder="ejemplo@correo.com">
+                <input type="email" 
+                    class="form-control" 
+                    id="reg-email" 
+                    placeholder="ejemplo@correo.com"
+                    required
+                    pattern="(?:[a-z0-9!#$%&'*+/=?^_{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_{|}~-]+)*|&quot;(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\
+            \[\x01-\x09\x0b\x0c\x0e-\x7f])*&quot;)@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|
+            \[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\
+            \[\x01-\x09\x0b\x0c\x0e-\x7f])+)\]
+            )"
+                    title="Correo mal escrito">
             </div>
             <div class="mb-3">
                 <label class="form-label">Contraseña</label>
@@ -58,7 +81,7 @@
         const password = document.getElementById('login-password').value;
         const msg = document.getElementById('login-msg');
 
-        if (!email || !password) return showMsg(msg, 'Completa todos los campos.', 'danger');
+        if (!email || !password) return showMsg(msg, 'Completa todos los campos', 'danger');
 
         btn.disabled = true; btn.textContent = 'Verificando...';
 
